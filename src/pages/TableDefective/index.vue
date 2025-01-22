@@ -1,182 +1,150 @@
 <script setup>
-const columns = [
-  {
-    name: "name",
-    required: true,
-    label: "Dessert (100g serving)",
-    align: "left",
-    field: (row) => row.name,
-    format: (val) => `${val}`,
-    sortable: true,
-  },
-  {
-    name: "calories",
-    align: "center",
-    label: "Calories",
-    field: "calories",
-    sortable: true,
-  },
-  { name: "fat", label: "Fat (g)", field: "fat", sortable: true },
-  { name: "carbs", label: "Carbs (g)", field: "carbs" },
-  { name: "protein", label: "Protein (g)", field: "protein" },
-  { name: "sodium", label: "Sodium (mg)", field: "sodium" },
-  {
-    name: "calcium",
-    label: "Calcium (%)",
-    field: "calcium",
-    sortable: true,
-    sort: (a, b) => parseInt(a, 10) - parseInt(b, 10),
-  },
-  {
-    name: "iron",
-    label: "Iron (%)",
-    field: "iron",
-    sortable: true,
-    sort: (a, b) => parseInt(a, 10) - parseInt(b, 10),
-  },
-];
+import { ref, onMounted, watch } from "vue";
+import UiTextH1 from "@/components/Ui/UiTextH1.vue";
+import { useDefective } from "@/stores/Defective";
+import debounce from "lodash/debounce";
 
-const rows = [
-  {
-    name: "Frozen Yogurt",
-    calories: 159,
-    fat: 6.0,
-    carbs: 24,
-    protein: 4.0,
-    sodium: 87,
-    calcium: "14%",
-    iron: "1%",
-  },
-  {
-    name: "Ice cream sandwich",
-    calories: 237,
-    fat: 9.0,
-    carbs: 37,
-    protein: 4.3,
-    sodium: 129,
-    calcium: "8%",
-    iron: "1%",
-  },
-  {
-    name: "Eclair",
-    calories: 262,
-    fat: 16.0,
-    carbs: 23,
-    protein: 6.0,
-    sodium: 337,
-    calcium: "6%",
-    iron: "7%",
-  },
-  {
-    name: "Cupcake",
-    calories: 305,
-    fat: 3.7,
-    carbs: 67,
-    protein: 4.3,
-    sodium: 413,
-    calcium: "3%",
-    iron: "8%",
-  },
-  {
-    name: "Gingerbread",
-    calories: 356,
-    fat: 16.0,
-    carbs: 49,
-    protein: 3.9,
-    sodium: 327,
-    calcium: "7%",
-    iron: "16%",
-  },
-  {
-    name: "Jelly bean",
-    calories: 375,
-    fat: 0.0,
-    carbs: 94,
-    protein: 0.0,
-    sodium: 50,
-    calcium: "0%",
-    iron: "0%",
-  },
-  {
-    name: "Lollipop",
-    calories: 392,
-    fat: 0.2,
-    carbs: 98,
-    protein: 0,
-    sodium: 38,
-    calcium: "0%",
-    iron: "2%",
-  },
-  {
-    name: "Honeycomb",
-    calories: 408,
-    fat: 3.2,
-    carbs: 87,
-    protein: 6.5,
-    sodium: 562,
-    calcium: "0%",
-    iron: "45%",
-  },
-  {
-    name: "Donut",
-    calories: 452,
-    fat: 25.0,
-    carbs: 51,
-    protein: 4.9,
-    sodium: 326,
-    calcium: "2%",
-    iron: "22%",
-  },
-  {
-    name: "KitKat",
-    calories: 518,
-    fat: 26.0,
-    carbs: 65,
-    protein: 7,
-    sodium: 54,
-    calcium: "12%",
-    iron: "6%",
-  },
-];
+const storeDefective = useDefective();
+const searchQuery = ref("");
+const pagination = ref({
+  sortBy: "name",
+  descending: false,
+  rowsPerPage: 20,
+});
+const debouncedSearch = debounce(fetchSearchResults, 500);
+const debouncedUpdateQuantity = debounce(async (row) => {
+  await handleUpdate(row);
+}, 1500);
+
+onMounted(async () => {
+  await storeDefective.getDefectiveData();
+});
+
+watch(searchQuery, (newValue) => {
+  debouncedSearch(newValue);
+});
+
+async function fetchSearchResults(query) {
+  await storeDefective.getDefectiveData(query);
+}
+
+async function handleUpdate(row) {
+  try {
+    await storeDefective.handleUpdateQuantity(row);
+    row.isChanged = false;
+  } catch (error) {
+    console.error("Ошибка при обновлении количества:", error);
+  }
+}
+
+function handlerFocusInput(row) {
+  row.isChanged = true;
+  debouncedUpdateQuantity(row);
+}
 </script>
 
 <template>
-  <div class="q-pa-md">
-    <q-table
-      class="my-sticky-header-table"
-      flat
-      bordered
-      title="Treats"
-      :rows="rows"
-      :columns="columns"
-      row-key="name"
-    ></q-table>
+  <div class="table__wrapper">
+    <UiTextH1>Брак</UiTextH1>
+
+    <div class="settings">
+      <q-input
+        class="input-search"
+        v-model="searchQuery"
+        @update:model-value="fetchSearchResults()"
+        outlined
+        placeholder="Введите текст для поиска"
+        clearable
+      >
+        <template v-slot:prepend>
+          <q-icon name="search" />
+        </template>
+      </q-input>
+    </div>
+
+    <div class="q-pa-md">
+      <q-table
+        flat
+        bordered
+        :rows="storeDefective.rows"
+        :columns="storeDefective.columns"
+        v-model:pagination="pagination"
+        row-key="id"
+      >
+        <template v-slot:body-cell-accountNumber="props">
+          <q-td :props="props">
+            {{ props.pageIndex + 1 }}
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-createdAt="props">
+          <q-td :props="props">
+            {{ storeDefective.formatDate(props.row.createdAt) }}
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell="props">
+          <q-td :props="props">
+            <div v-if="props.col.name !== 'quantity'">
+              {{ props.row[props.col.name] }}
+            </div>
+            <q-input
+              v-else
+              v-model.number="props.row.quantity"
+              input-class="text-start"
+              type="number"
+              dense
+              borderless
+              @focus="handlerFocusInput(props.row)"
+            ></q-input>
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-delete="props">
+          <q-td :props="props" class="text-center">
+            <div class="actions-btn">
+              <q-btn
+                color="red"
+                icon="delete"
+                round
+                dense
+                @click="storeDefective.handleDelete(props.row)"
+              >
+                <q-tooltip>Удалить</q-tooltip>
+              </q-btn>
+            </div>
+          </q-td>
+        </template>
+      </q-table>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.my-sticky-header-table {
-  .q-table__top,
-  .q-table__bottom,
-  thead tr:first-child th {
-    background-color: #00b4ff;
+.table__wrapper {
+  h1 {
+    text-align: center;
+    font-size: 34px;
+    font-weight: 600;
   }
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
 
-  thead tr th {
-    position: sticky;
-    z-index: 1;
-  }
+.settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
 
-  thead tr:first-child th {
-    top: 0;
+  .input-search {
+    width: 600px;
   }
+}
 
-  &.q-table--loading thead tr:last-child th {
-    top: 48px;
-  }
-
-  tbody {
-    scroll-margin-top: 48px;
-  }
+.actions-btn {
+  display: flex;
+  gap: 10px;
 }
 </style>

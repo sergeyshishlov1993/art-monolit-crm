@@ -1,9 +1,33 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, watch } from "vue";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 import { useWarehouse } from "@/stores/Warehouse";
+import debounce from "lodash/debounce";
 
 const storeWarehouse = useWarehouse();
+const searchQuery = ref("");
+const pagination = ref({
+  sortBy: "name",
+  descending: false,
+  rowsPerPage: 20,
+});
+const debouncedSearch = debounce(fetchSearchResults, 500);
+
+onMounted(async () => {
+  await storeWarehouse.getWarehouseData();
+});
+
+watch(searchQuery, (newValue) => {
+  debouncedSearch(newValue);
+});
+
+async function fetchSearchResults(query) {
+  await storeWarehouse.getWarehouseData(query);
+}
+
+function handlerFocusInput(row) {
+  row.isChanged = true;
+}
 </script>
 
 <template>
@@ -19,7 +43,18 @@ const storeWarehouse = useWarehouse();
         @click="storeWarehouse.addRow"
       ></q-btn>
 
-      <ui-input />
+      <q-input
+        class="input-search"
+        v-model="searchQuery"
+        @update:model-value="fetchSearchResults()"
+        outlined
+        placeholder="Введите текст для поиска"
+        clearable
+      >
+        <template v-slot:prepend>
+          <q-icon name="search" />
+        </template>
+      </q-input>
     </div>
 
     <div class="q-pa-md">
@@ -28,31 +63,72 @@ const storeWarehouse = useWarehouse();
         bordered
         :rows="storeWarehouse.rows"
         :columns="storeWarehouse.columns"
-        :rows-per-page="10"
-        :rows-per-page-options="[5, 10, 20, 50]"
+        v-model:pagination="pagination"
         row-key="id"
       >
+        <template v-slot:body-cell-accountNumber="props">
+          <q-td :props="props">
+            {{ props.pageIndex + 1 }}
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-createdAt="props">
+          <q-td :props="props">
+            {{ storeWarehouse.formatDate(props.row.createdAt) }}
+          </q-td>
+        </template>
+
         <template v-slot:body-cell="props">
           <q-td :props="props">
             <q-input
+              v-if="props.col.name !== 'createdAt'"
               v-model.number="props.row[props.col.name]"
               input-class="text-start"
               type="string"
               dense
               borderless
+              @focus="handlerFocusInput(props.row)"
             ></q-input>
           </q-td>
         </template>
 
         <template v-slot:body-cell-delete="props">
           <q-td :props="props" class="text-center">
-            <q-btn
-              color="red"
-              icon="delete"
-              round
-              dense
-              @click="removeItem(props.row)"
-            ></q-btn>
+            <div class="actions-btn">
+              <q-btn
+                :disable="!props.row.isChanged"
+                icon="sync"
+                round
+                glossy
+                color="teal"
+                dense
+                ripple
+                @click="storeWarehouse.handleUpdate(props.row)"
+              >
+                <q-tooltip>Изменить</q-tooltip>
+              </q-btn>
+
+              <q-btn
+                round
+                color="primary"
+                icon="edit"
+                dense
+                @click="storeWarehouse.handleAdd(props.row)"
+                v-if="props.row.isCreated"
+              >
+                <q-tooltip>Добавить</q-tooltip>
+              </q-btn>
+
+              <q-btn
+                color="red"
+                icon="delete"
+                round
+                dense
+                @click="storeWarehouse.handleDelete(props.row)"
+              >
+                <q-tooltip>Удалить</q-tooltip>
+              </q-btn>
+            </div>
           </q-td>
         </template>
       </q-table>
@@ -62,7 +138,6 @@ const storeWarehouse = useWarehouse();
 
 <style lang="scss" scoped>
 .table__wrapper {
-  padding-top: 50px;
   h1 {
     text-align: center;
     font-size: 34px;
@@ -71,5 +146,21 @@ const storeWarehouse = useWarehouse();
   display: flex;
   flex-direction: column;
   gap: 50px;
+}
+
+.settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+
+  .input-search {
+    width: 400px;
+  }
+}
+
+.actions-btn {
+  display: flex;
+  gap: 10px;
 }
 </style>

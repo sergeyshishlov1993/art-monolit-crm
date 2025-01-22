@@ -1,10 +1,49 @@
 <script setup>
-import { ref } from "vue";
-import { useWarehouse } from "@/stores/Warehouse";
+import { ref, onMounted, watch } from "vue";
+import { useArrival } from "@/stores/Arrival";
+import debounce from "lodash/debounce";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 import UiInput from "@/components/Ui/UiInput.vue";
 
-const storeWarehouse = useWarehouse();
+const storeArrival = useArrival();
+const searchQuery = ref("");
+const debouncedSearch = debounce(fetchSearchResults, 500);
+const debouncedUpdate = debounce(async (row) => {
+  await handleUpdate(row);
+}, 3000);
+onMounted(async () => {
+  await storeArrival.fetchMaterialsData();
+});
+watch(searchQuery, (newValue) => {
+  debouncedSearch(newValue);
+});
+
+async function fetchSearchResults(query) {
+  await storeArrival.fetchMaterialsData(query);
+}
+
+async function handleUpdate(row) {
+  try {
+    await storeArrival.handleUpdate(row);
+    row.isChanged = false;
+  } catch (error) {
+    console.error("Ошибка при обновлении количества:", error);
+  }
+}
+
+function handlerFocusInput(row) {
+  row.isChanged = true;
+
+  if (!row.isCreated) {
+    debouncedUpdate(row);
+  }
+}
+
+async function clearTableArrival() {
+  await storeArrival.clearTableArrival();
+
+  storeArrival.rows = [];
+}
 </script>
 
 <template>
@@ -17,52 +56,122 @@ const storeWarehouse = useWarehouse();
         icon="add"
         round
         dense
-        @click="storeWarehouse.addRow"
+        @click="storeArrival.addRow"
       ></q-btn>
 
-      <ui-input />
+      <q-input
+        class="input-search"
+        v-model="searchQuery"
+        @update:model-value="fetchSearchResults()"
+        outlined
+        placeholder="Введите текст для поиска"
+        clearable
+      >
+        <template v-slot:prepend>
+          <q-icon name="search" />
+        </template>
+      </q-input>
     </div>
 
     <div class="q-pa-md">
       <q-table
         flat
         bordered
-        title="Приход"
-        :rows="storeWarehouse.rows"
-        :columns="storeWarehouse.columns"
+        :rows="storeArrival.rows"
+        :columns="storeArrival.columns"
+        v-model:pagination="pagination"
         row-key="id"
       >
+        <template v-slot:body-cell-accountNumber="props">
+          <q-td :props="props">
+            {{ props.pageIndex + 1 }}
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-createdAt="props">
+          <q-td :props="props">
+            {{ storeArrival.formatDate(props.row.createdAt) }}
+          </q-td>
+        </template>
+
         <template v-slot:body-cell="props">
           <q-td :props="props">
             <q-input
+              v-if="props.col.name !== 'createdAt'"
               v-model.number="props.row[props.col.name]"
               input-class="text-start"
               type="string"
               dense
               borderless
+              @focus="handlerFocusInput(props.row)"
             ></q-input>
           </q-td>
         </template>
 
         <template v-slot:body-cell-delete="props">
           <q-td :props="props" class="text-center">
-            <q-btn
-              color="red"
-              icon="delete"
-              round
-              dense
-              @click="removeItem(props.row)"
-            ></q-btn>
+            <div class="actions-btn">
+              <q-btn
+                :disable="!props.row.isChanged"
+                icon="sync"
+                round
+                glossy
+                color="teal"
+                dense
+                ripple
+                @click="storeArrival.handleUpdate(props.row)"
+              >
+                <q-tooltip>Изменить</q-tooltip>
+              </q-btn>
+
+              <q-btn
+                round
+                color="primary"
+                icon="edit"
+                dense
+                @click="storeArrival.handleAdd(props.row)"
+                v-if="props.row.isCreated"
+              >
+                <q-tooltip>Добавить</q-tooltip>
+              </q-btn>
+
+              <q-btn
+                color="red"
+                icon="delete"
+                round
+                dense
+                @click="storeArrival.handleDelete(props.row)"
+              >
+                <q-tooltip>Удалить</q-tooltip>
+              </q-btn>
+            </div>
           </q-td>
         </template>
       </q-table>
+    </div>
+
+    <div class="button-group">
+      <q-btn
+        label="Внести приход"
+        icon="add_circle"
+        color="green"
+        push
+        @click="storeArrival.transferDataToWarehouse()"
+      />
+
+      <q-btn
+        label="Очистить"
+        icon="clear"
+        color="red"
+        class="q-mr-sm"
+        @click="clearTableArrival()"
+      />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .table__wrapper {
-  padding-top: 50px;
   h1 {
     text-align: center;
     font-size: 34px;
@@ -76,15 +185,23 @@ const storeWarehouse = useWarehouse();
 .settings {
   display: flex;
   align-items: center;
-  gap: 50px;
+  justify-content: space-between;
+  gap: 30px;
 
-  .select {
-    width: 190px;
-    white-space: nowrap;
+  .input-search {
+    width: 400px;
   }
+}
 
-  input {
-    width: 300px;
-  }
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px;
+}
+
+.actions-btn {
+  display: flex;
+  gap: 10px;
 }
 </style>

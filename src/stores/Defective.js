@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 
-export const useWarehouse = defineStore("warehouse", () => {
+export const useDefective = defineStore("defective", () => {
   const $q = useQuasar();
   const columns = ref([
     {
@@ -44,30 +44,17 @@ export const useWarehouse = defineStore("warehouse", () => {
       field: "price",
     },
     {
-      name: "earnings",
-      label: "Заработок %",
-      align: "left",
-      field: "earnings",
-    },
-    {
       name: "weight",
       align: "left",
       label: "Вес",
       field: "weight",
     },
+
     {
       name: "quantity",
       label: "Количество",
       align: "left",
       field: "quantity",
-      sortable: true,
-    },
-
-    {
-      name: "defective",
-      label: "Брак",
-      align: "left",
-      field: "defective",
       sortable: true,
     },
 
@@ -82,7 +69,7 @@ export const useWarehouse = defineStore("warehouse", () => {
 
     {
       name: "delete",
-      label: "Действие",
+      label: "Удалить",
       align: "left",
       field: "delete",
       sortable: true,
@@ -91,23 +78,6 @@ export const useWarehouse = defineStore("warehouse", () => {
 
   const rows = ref([]);
 
-  function addRow() {
-    rows.value.push({
-      id: crypto.randomUUID(),
-      accountNumber: rows.value.length + 1,
-      name: "",
-      length: "",
-      width: "",
-      thickness: "",
-      priceM2: "",
-      price: "",
-      weight: "",
-      count: "",
-      defective: 0,
-      createdAt: new Date(),
-      isCreated: true,
-    });
-  }
   function formatDate(dateString) {
     const date = new Date(dateString);
 
@@ -118,17 +88,19 @@ export const useWarehouse = defineStore("warehouse", () => {
     return `${day}.${month}.${year}`;
   }
 
-  async function handleAdd(item) {
+  async function getDefectiveData(search) {
     try {
-      const response = await axios.post(
-        "http://localhost:8000/warehouse/create",
-        {
-          item,
-        }
-      );
+      const params = {
+        search: search,
+      };
+      const response = await axios.get("http://localhost:8000/defective", {
+        params,
+      });
+
+      rows.value = response.data.defective;
 
       $q.notify({
-        message: "Успешно cоздано!",
+        message: "Данные (брак) успешно получены!",
         color: "positive",
         icon: "check_circle",
         position: "top-right",
@@ -145,15 +117,15 @@ export const useWarehouse = defineStore("warehouse", () => {
       });
     }
   }
-  async function handleUpdate(row) {
+  async function handleUpdateQuantity(row) {
     try {
       const response = await axios.put(
-        `http://localhost:8000/warehouse/update/${row.id}`,
+        `http://localhost:8000/defective/update-quantity/${row.id}`,
         {
-          item: row,
+          quantity: row.quantity,
         }
       );
-      console.log("Обновление строки", response);
+      console.log("Обновление количеста", response);
       row.isChanged = false;
 
       $q.notify({
@@ -182,7 +154,7 @@ export const useWarehouse = defineStore("warehouse", () => {
     }
     try {
       const response = await axios.delete(
-        `http://localhost:8000/warehouse/delete/${row.id}`
+        `http://localhost:8000/defective/delete/${row.id}`
       );
 
       $q.notify({
@@ -203,44 +175,13 @@ export const useWarehouse = defineStore("warehouse", () => {
       });
     }
   }
-  async function getWarehouseData(search) {
-    try {
-      const params = {
-        search: search,
-      };
-      const response = await axios.get("http://localhost:8000/warehouse", {
-        params,
-      });
-
-      rows.value = response.data.warehouse;
-
-      $q.notify({
-        message: "Данные (склад) успешно получены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
-    } catch (error) {
-      console.error("error", error);
-
-      $q.notify({
-        message: `Ошибка: ${error.response?.data?.message || error.message}`,
-        color: "negative",
-        icon: "error",
-        timeout: 3000,
-      });
-    }
-  }
 
   return {
     columns,
     rows,
-    addRow,
-    getWarehouseData,
     formatDate,
-    handleAdd,
-    handleUpdate,
+    getDefectiveData,
+    handleUpdateQuantity,
     handleDelete,
   };
 });

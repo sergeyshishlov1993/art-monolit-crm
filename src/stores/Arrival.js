@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 
-export const useWarehouse = defineStore("warehouse", () => {
+export const useArrival = defineStore("arrival", () => {
   const $q = useQuasar();
   const columns = ref([
     {
@@ -44,23 +44,10 @@ export const useWarehouse = defineStore("warehouse", () => {
       field: "price",
     },
     {
-      name: "earnings",
-      label: "Заработок %",
-      align: "left",
-      field: "earnings",
-    },
-    {
       name: "weight",
       align: "left",
       label: "Вес",
       field: "weight",
-    },
-    {
-      name: "quantity",
-      label: "Количество",
-      align: "left",
-      field: "quantity",
-      sortable: true,
     },
 
     {
@@ -68,6 +55,13 @@ export const useWarehouse = defineStore("warehouse", () => {
       label: "Брак",
       align: "left",
       field: "defective",
+      sortable: true,
+    },
+    {
+      name: "quantity",
+      label: "Количество",
+      align: "left",
+      field: "quantity",
       sortable: true,
     },
 
@@ -82,7 +76,7 @@ export const useWarehouse = defineStore("warehouse", () => {
 
     {
       name: "delete",
-      label: "Действие",
+      label: "Действия",
       align: "left",
       field: "delete",
       sortable: true,
@@ -108,6 +102,15 @@ export const useWarehouse = defineStore("warehouse", () => {
       isCreated: true,
     });
   }
+  function getCurrentDate() {
+    const date = new Date();
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}.${month}.${year}`;
+  }
   function formatDate(dateString) {
     const date = new Date(dateString);
 
@@ -118,12 +121,58 @@ export const useWarehouse = defineStore("warehouse", () => {
     return `${day}.${month}.${year}`;
   }
 
+  async function clearTableArrival() {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8000/arrival/clear`
+      );
+
+      $q.notify({
+        message: "Успешно очишена таблицы Материалы",
+        color: "positive",
+        icon: "check_circle",
+        position: "top-right",
+        timeout: 2500,
+      });
+    } catch (error) {
+      console.error("ERROR", error);
+    }
+  }
+  async function fetchMaterialsData(search) {
+    try {
+      const params = {
+        search: search,
+      };
+      const response = await axios.get("http://localhost:8000/arrival", {
+        params,
+      });
+
+      rows.value = response.data.arrival;
+
+      $q.notify({
+        message: "Данные (приход) успешно получены!",
+        color: "positive",
+        icon: "check_circle",
+        position: "top-right",
+        timeout: 2500,
+      });
+    } catch (error) {
+      console.error("error", error);
+
+      $q.notify({
+        message: `Ошибка: ${error.response?.data?.message || error.message}`,
+        color: "negative",
+        icon: "error",
+        timeout: 3000,
+      });
+    }
+  }
   async function handleAdd(item) {
     try {
       const response = await axios.post(
-        "http://localhost:8000/warehouse/create",
+        "http://localhost:8000/arrival/create",
         {
-          item,
+          arrivalData: item,
         }
       );
 
@@ -148,9 +197,9 @@ export const useWarehouse = defineStore("warehouse", () => {
   async function handleUpdate(row) {
     try {
       const response = await axios.put(
-        `http://localhost:8000/warehouse/update/${row.id}`,
+        `http://localhost:8000/arrival/update/${row.id}`,
         {
-          item: row,
+          arrivalData: row,
         }
       );
       console.log("Обновление строки", response);
@@ -182,7 +231,7 @@ export const useWarehouse = defineStore("warehouse", () => {
     }
     try {
       const response = await axios.delete(
-        `http://localhost:8000/warehouse/delete/${row.id}`
+        `http://localhost:8000/arrival/delete/${row.id}`
       );
 
       $q.notify({
@@ -203,33 +252,22 @@ export const useWarehouse = defineStore("warehouse", () => {
       });
     }
   }
-  async function getWarehouseData(search) {
-    try {
-      const params = {
-        search: search,
-      };
-      const response = await axios.get("http://localhost:8000/warehouse", {
-        params,
-      });
 
-      rows.value = response.data.warehouse;
+  async function transferDataToWarehouse() {
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/arrival/transfer-to-warehouse`
+      );
 
       $q.notify({
-        message: "Данные (склад) успешно получены!",
+        message: "Успешно внесено в склад",
         color: "positive",
         icon: "check_circle",
         position: "top-right",
         timeout: 2500,
       });
     } catch (error) {
-      console.error("error", error);
-
-      $q.notify({
-        message: `Ошибка: ${error.response?.data?.message || error.message}`,
-        color: "negative",
-        icon: "error",
-        timeout: 3000,
-      });
+      console.error("ERROR", error);
     }
   }
 
@@ -237,10 +275,13 @@ export const useWarehouse = defineStore("warehouse", () => {
     columns,
     rows,
     addRow,
-    getWarehouseData,
     formatDate,
+    getCurrentDate,
+    fetchMaterialsData,
     handleAdd,
     handleUpdate,
     handleDelete,
+    transferDataToWarehouse,
+    clearTableArrival,
   };
 });

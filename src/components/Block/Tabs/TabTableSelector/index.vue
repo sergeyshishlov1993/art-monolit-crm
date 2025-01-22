@@ -5,41 +5,78 @@ import UiTextH5 from "@/components/Ui/UiTextH5.vue";
 import UiTextH6 from "@/components/Ui/UiTextH6.vue";
 
 const props = defineProps({
+  id: String,
   options: Array,
   selected: String,
   accountNumber: Number,
+  tab: String,
+  openWindol: Boolean,
 });
 
-const emit = defineEmits(["selectedValue"]);
+const emit = defineEmits(["selectedValue", "create", "showModal"]);
+const showDialog = ref(false);
 
-const selected = ref(props.selected || null);
+function openDialog() {
+  showDialog.value = true;
+  emit("showModal", showDialog.value, props.id);
+  showOptions.value = false;
+}
+
+// const selected = ref(props.selected || null);
+
+const selected = computed(() => props.selected);
 const search = ref("");
 const showOptions = ref(false);
 const dropdownStyles = ref({});
 
-const options = computed(() => {
+const warehouseOptions = computed(() => {
   return props.options.map((el) => ({
+    id: props.id,
     accountNumber: props.accountNumber,
+    warehouseId: el.id,
     name: `${el.name} (${el.length}X${el.width}X${el.thickness})`,
-    price: Math.ceil(+el.price * 1.4),
+    quantity: 1,
+    isCreatedMenedger: false,
+    price: Math.ceil(+el.price + (+el.price * el.earnings) / 100),
     value: `(${el.length}X${el.width}X${el.thickness})`,
   }));
 });
 
-const handleInput = (event) => {
-  search.value = event.target.value;
-};
+const typeWorkOptions = computed(() => {
+  return (props.options || []).map((el) => ({
+    ...el,
+    items: (el.items || []).map((item) => ({
+      ...item,
+      id: props.id,
+
+      accountNumber: props.accountNumber,
+    })),
+  }));
+});
+
+const serviceOptions = computed(() => {
+  return (props.options || []).map((el) => ({
+    ...el,
+    id: props.id,
+
+    accountNumber: props.accountNumber,
+  }));
+});
 
 const filteredOptions = computed(() => {
-  return options.value.filter((el) =>
+  return warehouseOptions.value.filter((el) =>
     el.name.toLowerCase().includes(search.value.toLowerCase())
   );
 });
+const handleInput = (event) => {
+  search.value = event.target.value;
+};
 
 const handleSelect = (value) => {
   selected.value = value.name;
   showOptions.value = false;
   search.value = "";
+
   emit("selectedValue", value);
 };
 
@@ -60,18 +97,6 @@ const toggleOptions = (event) => {
     calculateDropdownPosition(event.currentTarget);
   }
 };
-
-const closeDropdown = () => {
-  showOptions.value = false;
-};
-
-onMounted(() => {
-  document.addEventListener("click", closeDropdown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener("click", closeDropdown);
-});
 </script>
 
 <template>
@@ -88,6 +113,7 @@ onBeforeUnmount(() => {
         @click.stop
       >
         <UiInput
+          v-if="props.tab == 'rowsMaterials'"
           :class="$style.input"
           type="search"
           placeholder="Найти или выбрать"
@@ -95,14 +121,52 @@ onBeforeUnmount(() => {
           @input="(event) => handleInput(event)"
         />
 
-        <UiTextH6
-          v-for="option in filteredOptions"
-          :key="option.name"
-          @click="handleSelect(option)"
-          :class="$style.options"
-        >
-          {{ option.name }}
-        </UiTextH6>
+        <q-btn
+          label="Добавить"
+          icon="add"
+          color="primary"
+          @click="openDialog"
+        />
+
+        <div v-if="props.tab == 'rowsMaterials'">
+          <UiTextH6
+            v-for="option in filteredOptions"
+            :key="option.name"
+            @click="handleSelect(option)"
+            :class="$style.options"
+          >
+            <span> {{ option.title }}</span>
+            {{ option.name }}
+          </UiTextH6>
+        </div>
+
+        <ul>
+          <li v-for="group in typeWorkOptions" :key="group.title">
+            <UiTextH6 class="title-list">{{ group.title }}</UiTextH6>
+            <ul>
+              <li
+                v-for="item in group.items"
+                :key="item"
+                :class="$style.options"
+                @click="handleSelect(item)"
+              >
+                {{ item.name }}
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <div v-if="props.tab == 'rowsServices'">
+          <UiTextH6
+            v-for="option in serviceOptions"
+            :key="option.name"
+            @click="handleSelect(option)"
+            :class="$style.options"
+          >
+            <span> {{ option.title }}</span>
+            {{ option.name }}
+          </UiTextH6>
+        </div>
       </div>
     </teleport>
   </div>
@@ -151,10 +215,19 @@ onBeforeUnmount(() => {
     }
   }
 }
+
+.title-list {
+  font-size: 16px;
+  font-weight: 600;
+}
 </style>
 
 <style module>
 .list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 4px;

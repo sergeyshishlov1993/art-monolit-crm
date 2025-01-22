@@ -11,10 +11,12 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.6.0",
     "@quasar/extras": "^1.16.13",
+    "axios": "^1.7.8",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "bootstrap-vue-3": "^0.5.1",
     "date-fns": "^4.1.0",
+    "lodash": "^4.17.21",
     "material-design-icons-iconfont": "^6.7.0",
     "pdfmake": "^0.2.15",
     "pinia": "^2.2.6",

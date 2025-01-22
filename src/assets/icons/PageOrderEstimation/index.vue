@@ -1,27 +1,50 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useQuasar } from "quasar";
-import { useOrders } from "@/stores/Orders";
-import { usePreOrders } from "@/stores/PreOrders";
 import axios from "axios";
+import { ref, reactive, computed, onMounted } from "vue";
+import { useQuasar } from "quasar";
+import { useRoute, useRouter } from "vue-router";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 
-import TabDead from "@/components/Block/Tabs/TabDead.vue";
+import UiTextH1 from "@/components/Ui/UiTextH1.vue";
+import UiTextH2 from "@/components/Ui/UiTextH2.vue";
+import TheTabs from "@/components/Block/TheTabs.vue";
 import TabMaterials from "@/components/Block/Tabs/TabMaterials.vue";
 import TabTypeWork from "@/components/Block/Tabs/TabTypeWork.vue";
 import TabServices from "@/components/Block/Tabs/TabServices.vue";
-import TheTabs from "@/components/Block/TheTabs.vue";
-import UiTextH1 from "@/components/Ui/UiTextH1.vue";
-import UiTextH2 from "@/components/Ui/UiTextH2.vue";
 
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 
+const activeTabComponent = computed(() => {
+  switch (currentTab.value) {
+    case "Материалы":
+      return TabMaterials;
+
+    case "Виды работ":
+      return TabTypeWork;
+
+    case "Услуги":
+      return TabServices;
+  }
+});
+const activeTabProps = computed(() => {
+  switch (currentTab.value) {
+    case "Материалы":
+      return { rows: dataTable.rowsMaterials, isCreated: isOrderCreated.value };
+    case "Виды работ":
+      return { rows: dataTable.rowsWorks };
+    case "Услуги":
+      return { rows: dataTable.rowsServices };
+    default:
+      return {};
+  }
+});
 const accountNumber = ref(route.query.accountNumber);
-const currentTab = ref("Умерший");
+const balancePaid = ref(0);
+const currentTab = ref("");
+
 const dataTable = reactive({
   customer: {
     name: "",
@@ -30,20 +53,7 @@ const dataTable = reactive({
     phone: "",
     address: "",
     comment: "",
-    status: "new",
   },
-
-  rowsDead: [
-    {
-      id: crypto.randomUUID(),
-      accountNumber: 1,
-      deadName: "",
-      deadSecondName: "",
-      deadSurName: "",
-      deadDateBirth: "",
-      deadDateDeath: "",
-    },
-  ],
 
   rowsMaterials: [
     {
@@ -73,132 +83,39 @@ const dataTable = reactive({
     },
   ],
 });
-const finalPrice = ref(0);
+const formatTotalPrice = computed(() => {
+  return totalPrice.value.toLocaleString("ru-RU");
+});
+
 const isProcessing = ref(false);
 const isOrderCreated = ref(route.query.isCreated === "false");
-const isMoved = ref(route.query.isMoved === "true");
 const order = ref({});
 const prepayment = ref(0);
-const sale = ref(0);
 const selectedSource = ref("Магазин");
 const source = ["Google", "Facebook", "Instagram", "Рекомендация", "Магазин"];
-const store = useOrders();
-const storePreOrder = usePreOrders();
 const tabs = [
-  { name: "Умерший" },
   { name: "Материалы" },
   { name: "Виды работ" },
   { name: "Услуги" },
 ];
 const totalPrice = ref(0);
 
-const calcFinalPrice = (event, name) => {
-  const value = event.target.value.replace(/\D/g, "");
-
-  switch (name) {
-    case "prepayment":
-      prepayment.value = value;
-      break;
-
-    case "sale":
-      sale.value = value;
-      break;
-  }
-
-  formatCurrency(
-    (finalPrice.value = Math.max(
-      0,
-      totalPrice.value - prepayment.value - sale.value
-    ))
-  );
-};
-const formatCurrency = (value) => {
-  return parseFloat(value || 0).toLocaleString("ru-RU");
-};
-
-const activeTabComponent = computed(() => {
-  switch (currentTab.value) {
-    case "Материалы":
-      return TabMaterials;
-
-    case "Умерший":
-      return TabDead;
-
-    case "Виды работ":
-      return TabTypeWork;
-
-    case "Услуги":
-      return TabServices;
-  }
-});
-const activeTabProps = computed(() => {
-  switch (currentTab.value) {
-    case "Умерший":
-      return { rows: dataTable.rowsDead };
-
-    case "Материалы":
-      return { rows: dataTable.rowsMaterials, isCreated: isOrderCreated.value };
-    case "Виды работ":
-      return { rows: dataTable.rowsWorks };
-    case "Услуги":
-      return { rows: dataTable.rowsServices };
-    default:
-      return {};
-  }
-});
-const formatFinalPrice = computed(() => {
-  return formatCurrency(finalPrice.value);
-});
-const formattedPrepayment = computed(() => {
-  return formatCurrency(prepayment.value);
-});
-const formatSale = computed(() => {
-  return formatCurrency(sale.value);
-});
-const formatTotalPrice = computed(() => {
-  return formatCurrency(totalPrice.value);
-});
-
 onMounted(async () => {
   if (isOrderCreated.value) {
     await getOrder();
   }
-
-  if (isMoved.value) {
-    const { address, comment, first_name, second_name, name, phone } =
-      storePreOrder.movedPreOrders;
-
-    totalPrice.value = storePreOrder.movedPreOrders.totalPrice;
-    dataTable.customer = {
-      address,
-      comment,
-      first_name,
-      second_name,
-      name,
-      phone,
-      status: "new",
-    };
-
-    dataTable.rowsMaterials = storePreOrder.movedPreOrders.PreOrderMaterials;
-    dataTable.rowsServices = storePreOrder.movedPreOrders.PreOrderServices;
-    dataTable.rowsWorks = storePreOrder.movedPreOrders.PreOrderWorks;
-  }
 });
 
-function addItem(tableName, item) {
-  if (tableName === "rowsWorks") {
-    dataTable.rowsWorks.push(item);
-  } else {
-    dataTable[tableName].push(
-      reactive({
-        id: crypto.randomUUID(),
-        accountNumber: dataTable[tableName].length + 1,
-        name: "Выбрать",
-        quantity: 1,
-        price: 0,
-      })
-    );
-  }
+function addItem(tableName) {
+  dataTable[tableName].push(
+    reactive({
+      id: crypto.randomUUID(),
+      accountNumber: dataTable[tableName].length + 1,
+      name: "Выбрать",
+      quantity: 1,
+      price: 0,
+    })
+  );
 }
 function addSelectedValue(val, table) {
   const idx = dataTable[table].findIndex((el) => el.id === val.id);
@@ -226,62 +143,21 @@ function calcTotalPrice() {
   }, 0);
 
   totalPrice.value = materials + services + works;
-  finalPrice.value = formatTotalPrice.value;
+  balancePaid.value = formatTotalPrice.value;
 }
 function changeTab(name) {
   currentTab.value = name;
 }
 function createCell(table, val, id) {
-  dataTable[table] = val;
+  const idx = dataTable[table].findIndex((el) => el.id === id);
+
+  dataTable[table][idx] = val;
 
   calcTotalPrice();
 }
 function generatePDF() {
-  const rowsMaterials = ref([
-    { id: crypto.randomUUID(), header: "На стеле" },
-    { id: crypto.randomUUID(), header: "На плите" },
-    ...dataTable.rowsWorks,
-  ]);
-
-  const sortedRows = computed(() => {
-    const headers = rowsMaterials.value.filter((row) => row.header);
-    const result = reactive([]);
-
-    headers.forEach((header) => {
-      result.push(header);
-      const relatedRows = rowsMaterials.value.filter(
-        (row) => row.parentTitle === header.header
-      );
-      result.push(...relatedRows);
-    });
-
-    return result;
-  });
-
   const docDefinition = {
     content: [
-      {
-        stack: [
-          {
-            text: "Запорожье",
-            alignment: "left",
-            fontSize: 10,
-            margin: [0, 0, 0, 5],
-          },
-          {
-            text: "вул Космическая 63",
-            alignment: "left",
-            fontSize: 10,
-            margin: [0, 0, 0, 5],
-          },
-          {
-            text: "+380(50) 852 05 94",
-            alignment: "left",
-            fontSize: 10,
-          },
-        ],
-        width: "auto",
-      },
       { text: "Заказ №1", style: "header", alignment: "center" },
 
       { text: `${order.value.name}`, style: "header", alignment: "center" },
@@ -387,88 +263,68 @@ function generatePDF() {
           widths: ["auto", "*", "auto"],
           body: [
             ["Номер", "Название", "Цена"],
-            ...sortedRows.value.flatMap((row, index, array) => {
-              if (row.header) {
-                return [
-                  [
-                    {
-                      text: row.header,
-                      colSpan: 3,
-                      bold: true,
-                      alignment: "left",
-                    },
-                    {},
-                    {},
-                  ],
-                ];
-              } else {
-                const rowIndex = array
-                  .slice(0, index)
-                  .filter((item) => !item.header).length;
-                return [
-                  [rowIndex + 1, row.name || "Не указано", row.price || "0"],
-                ];
-              }
-            }),
+            ...dataTable.rowsWorks.map((row, index) => [
+              index + 1,
+              row.name || "Не указано",
+              row.price || "0",
+            ]),
           ],
         },
         layout: "grid",
       },
 
       { text: "Финансовая информация", style: "subheader" },
-      ,
       {
         table: {
-          headerRows: 0,
-          widths: ["*", "*"],
+          headerRows: 1,
+          widths: ["*", "*", "*"],
           body: [
             [
-              { text: "Общая сумма", alignment: "left" },
-              {
-                text:
-                  (Number(totalPrice.value) || 0).toLocaleString("ru-RU") +
-                  " грн",
-                alignment: "right",
-              },
-            ],
-            [
-              { text: "Скидка", alignment: "left" },
-              {
-                text:
-                  "-" +
-                  (Number(sale.value) || 0).toLocaleString("ru-RU") +
-                  " грн",
-                alignment: "right",
-              },
-            ],
-            [
-              { text: "Предоплата", alignment: "left" },
-              {
-                text:
-                  (Number(prepayment.value) || 0).toLocaleString("ru-RU") +
-                  " грн",
-                alignment: "right",
-              },
+              { text: "Предоплата", bold: true, alignment: "center" },
+              { text: "Остаток", bold: true, alignment: "center" },
+              { text: "Общая сумма", bold: true, alignment: "center" },
             ],
             [
               {
-                text: "Итоговая сумма",
-                alignment: "left",
+                text: prepayment.value.toLocaleString("ru-RU") + "грн",
                 bold: true,
-                fontSize: 12,
+                alignment: "center",
+                fontSize: 14,
               },
               {
-                text:
-                  (Number(finalPrice.value) || 0).toLocaleString("ru-RU") +
-                  " грн",
-                alignment: "right",
+                text: balancePaid.value.toLocaleString("ru-RU") + "грн",
                 bold: true,
+                alignment: "center",
+                fontSize: 14,
+              },
+              {
+                text: totalPrice.value.toLocaleString("ru-RU") + "грн",
+                bold: true,
+                alignment: "center",
                 fontSize: 14,
               },
             ],
           ],
         },
         layout: "noBorders",
+      },
+      {
+        text: "Запорожье",
+        alignment: "left",
+        margin: [0, 30, 0, 0],
+        fontSize: 10,
+      },
+      {
+        text: "вул Космическая 63",
+        alignment: "left",
+        fontSize: 10,
+        margin: [0, 10, 0, 0],
+      },
+      {
+        text: "телефон +380(50) 852 05 94",
+        alignment: "left",
+        fontSize: 10,
+        margin: [0, 10, 0, 0],
       },
     ],
     styles: {
@@ -490,39 +346,13 @@ function generatePDF() {
 
   pdfMake.createPdf(docDefinition).download(`${accountNumber.value}.pdf`);
 }
-function selectSource(select) {
-  selectSource.value = select;
-}
-function removeItem(table, id) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
-
-  if (idx !== -1) {
-    dataTable[table].splice(idx, 1);
-
-    dataTable[table].forEach((item, index) => {
-      item.accountNumber = index + 1;
-    });
-  }
-
-  calcTotalPrice();
-}
-function updateInput(table, id, row, fieldName) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
-
-  dataTable[table][idx][fieldName] = row[fieldName];
-
-  calcTotalPrice();
-}
-
 async function getOrder() {
   const response = await axios.get(
-    `http://localhost:8000/orders/${route.query.id}`
+    `http://localhost:8000/pre-orders/${route.query.id}`
   );
 
   order.value = response.data.order;
-  finalPrice.value = order.value.pay;
-  prepayment.value = order.value.prepayment;
-  sale.value = order.value.sale;
+
   totalPrice.value = +order.value.totalPrice;
 
   const { address, comment, first_name, second_name, name, phone } =
@@ -536,10 +366,10 @@ async function getOrder() {
     name,
     phone,
   };
-  dataTable.rowsDead = order.value.OrderDeads;
-  dataTable.rowsMaterials = order.value.OrderMaterials;
-  dataTable.rowsServices = order.value.OrderServices;
-  dataTable.rowsWorks = order.value.OrderWorks;
+
+  dataTable.rowsMaterials = order.value.PreOrderMaterials;
+  dataTable.rowsServices = order.value.PreOrderServices;
+  dataTable.rowsWorks = order.value.PreOrderWorks;
 }
 async function saveOrder() {
   isProcessing.value = true;
@@ -547,15 +377,12 @@ async function saveOrder() {
   const order = {
     id: crypto.randomUUID(),
     ...dataTable.customer,
+    isDraft: true,
+    isPublic: false,
     source: selectedSource.value,
-    prepayment: prepayment.value,
-    pay: finalPrice.value,
-    sale: sale.value,
     totalPrice: totalPrice.value,
-    currentData: store.getCurrentDate(),
 
     dataTable: {
-      rowsDead: dataTable.rowsDead,
       rowsMaterials: dataTable.rowsMaterials,
       rowsServices: dataTable.rowsServices,
       rowsWorks: dataTable.rowsWorks,
@@ -565,13 +392,15 @@ async function saveOrder() {
   try {
     isProcessing.value = true;
     if (!isOrderCreated.value) {
-      const response = await axios.post("http://localhost:8000/orders/create", {
-        orderData: order,
-        orderDeads: order.dataTable.rowsDead,
-        orderMaterials: order.dataTable.rowsMaterials,
-        orderServices: order.dataTable.rowsServices,
-        orderWorks: order.dataTable.rowsWorks,
-      });
+      const response = await axios.post(
+        "http://localhost:8000/pre-orders/create-preorder",
+        {
+          preOrderData: order,
+          preOrderMaterials: order.dataTable.rowsMaterials,
+          preOrderServices: order.dataTable.rowsServices,
+          preOrderWorks: order.dataTable.rowsWorks,
+        }
+      );
 
       $q.notify({
         message: "Замовлення створено успішно!",
@@ -581,29 +410,16 @@ async function saveOrder() {
         timeout: 2500,
       });
 
-      if (isMoved.value) {
-        try {
-          const response = axios.put(
-            `http://localhost:8000/pre-orders/update-preorder-status/${route.query.preOrderId}`
-          );
-
-          console.log("pre order move", response);
-        } catch (error) {
-          console.error("error", error);
-        }
-      }
-
-      router.push("/orders");
+      router.push("/calculate");
     } else {
       isProcessing.value = true;
       const response = await axios.put(
-        `http://localhost:8000/orders/update/${route.query.id}`,
+        `http://localhost:8000/pre-orders/update-preorder/${route.query.id}`,
         {
-          orderData: order,
-          orderDeads: order.dataTable.rowsDead,
-          orderMaterials: order.dataTable.rowsMaterials,
-          orderServices: order.dataTable.rowsServices,
-          orderWorks: order.dataTable.rowsWorks,
+          preOrderData: order,
+          preOrderMaterials: order.dataTable.rowsMaterials,
+          preOrderServices: order.dataTable.rowsServices,
+          preOrderWorks: order.dataTable.rowsWorks,
         }
       );
 
@@ -619,7 +435,7 @@ async function saveOrder() {
     isOrderCreated.value = false;
     isProcessing.value = false;
 
-    router.push("/orders");
+    router.push("/calculate");
   } catch (error) {
     $q.notify({
       message: `Помилка: ${error.response?.data?.message || error.message}`,
@@ -632,6 +448,27 @@ async function saveOrder() {
   } finally {
     isProcessing.value = false;
   }
+}
+function selectSource(select) {
+  selectSource.value = select;
+}
+function removeItem(table, id) {
+  const idx = dataTable[table].findIndex((el) => el.id === id);
+
+  if (idx !== -1) {
+    dataTable[table].splice(idx, 1);
+
+    dataTable[table].forEach((item, index) => {
+      item.accountNumber = index + 1;
+    });
+  }
+}
+function updateInput(table, id, row, fieldName) {
+  const idx = dataTable[table].findIndex((el) => el.id === id);
+
+  dataTable[table][idx][fieldName] = row[fieldName];
+
+  calcTotalPrice();
 }
 </script>
 
@@ -749,39 +586,8 @@ async function saveOrder() {
       </div>
     </div>
 
-    <div class="total-summary">
-      <div class="total-summary__row">
-        <span>Общая сумма</span>
-        <span>{{ formatTotalPrice }} ₴</span>
-      </div>
-      <div class="total-summary__row">
-        <span>Скидка</span>
-        <div>
-          <input
-            placeholder="0"
-            class="input-price"
-            v-model.number="formatSale"
-            @input="(event) => calcFinalPrice(event, 'sale')"
-          />
-          ₴
-        </div>
-      </div>
-      <div class="total-summary__row">
-        <span>Предоплата</span>
-        <div>
-          <input
-            placeholder="0"
-            class="input-price"
-            v-model.number="formattedPrepayment"
-            @input="(event) => calcFinalPrice(event, 'prepayment')"
-          />
-          ₴
-        </div>
-      </div>
-      <div class="total-summary__row total-summary__row--final">
-        <span>Итоговая сумма</span>
-        <span>{{ formatFinalPrice }} ₴</span>
-      </div>
+    <div class="total">
+      <strong>Общая сумма: </strong> {{ formatTotalPrice }} ₴
     </div>
 
     <div class="button-group">
@@ -795,11 +601,11 @@ async function saveOrder() {
       />
 
       <q-btn
-        @click="generatePDF"
         label="Сгенерировать PDF"
         icon="picture_as_pdf"
         color="red"
         class="q-mr-sm"
+        @click="generatePDF"
       />
     </div>
   </div>
@@ -888,36 +694,18 @@ async function saveOrder() {
   border-bottom: 1px solid rgba(216, 216, 216, 1);
 }
 
-.total-summary {
-  padding: 0 50px;
+.total {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 20px;
+  justify-content: flex-end;
+  margin-top: 15px;
   font-size: 18px;
-
-  &__row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e0e0e0;
-    padding: 5px 0;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &--final {
-      font-weight: bold;
-      font-size: 20px;
-      margin-top: 10px;
-    }
-  }
+  font-weight: bold;
 
   .input-price {
-    width: 100px;
-    text-align: right;
-    font-size: 18px;
-    padding: 5px;
+    width: 80px;
+    text-align: center;
   }
 }
 

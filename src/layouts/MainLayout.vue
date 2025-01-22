@@ -1,6 +1,8 @@
 <script setup>
-import TheHeader from "@/components/Block/TheHeader.vue";
+import { ref } from "vue";
 import TheSidebar from "@/components/Block/TheSidebar.vue";
+
+const isTransitioning = ref(false);
 </script>
 
 <template>
@@ -10,8 +12,10 @@ import TheSidebar from "@/components/Block/TheSidebar.vue";
     <div class="main-container">
       <the-sidebar />
 
-      <main class="content">
-        <router-view />
+      <main class="content" :class="{ fading: isTransitioning }">
+        <transition name="fade" mode="out-in">
+          <router-view />
+        </transition>
       </main>
     </div>
   </div>
@@ -31,6 +35,7 @@ import TheSidebar from "@/components/Block/TheSidebar.vue";
 }
 
 .main-container {
+  padding-top: 100px;
   display: flex;
   flex: 1;
 }
@@ -38,5 +43,21 @@ import TheSidebar from "@/components/Block/TheSidebar.vue";
 .content {
   flex: 1;
   padding: 30px;
+  margin-left: 70px;
+  transition: opacity 0.3s ease;
+}
+
+.content.fading {
+  opacity: 0.5;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -1,36 +1,84 @@
 <script setup>
-import UiTextH2 from "@/components/Ui/UiTextH2.vue";
-import UiTextH4 from "@/components/Ui/UiTextH4.vue";
+import IconLogo from "@/assets/icons/IconLogo.vue";
+import IconLogoout from "@/assets/icons/IconLogoout.vue";
 import IconOrder from "@/assets/icons/IconOrder.vue";
 import IconDefective from "@/assets/icons/IconDefective.vue";
 import IconMaterials from "@/assets/icons/iconMaterials.vue";
 import IconWarehouse from "@/assets/icons/IconWarehouse.vue";
 import IconArrival from "@/assets/icons/IconArrival.vue";
-import IconMenu from "@/assets/icons/IconMenu.vue";
+import IconCalculate from "@/assets/icons/IconCalculate.vue";
+import iconUser from "@/assets/icons/iconUser.vue";
 import UiTextH3 from "@/components/Ui/UiTextH3.vue";
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { usePermissionStore } from "@/stores/PermissionStore";
+import { useRoute, useRouter } from "vue-router";
+
+import { logout } from "@/services/authService";
 
 const isCollapsed = ref(true);
 const activePage = ref("orders");
+const route = useRoute();
+const router = useRouter();
+
+const permissionStore = usePermissionStore();
+const canViewArrival = computed(() => permissionStore.hasPermission("arrival"));
+const canViewOrders = computed(() => permissionStore.hasPermission("orders"));
+const canViewPreOrders = computed(() =>
+  permissionStore.hasPermission("calculation")
+);
+const canViewDefective = computed(() =>
+  permissionStore.hasPermission("defective")
+);
+const canViewMaterials = computed(() =>
+  permissionStore.hasPermission("materials")
+);
+const canViewWarehouse = computed(() =>
+  permissionStore.hasPermission("warehouse")
+);
 
 function selectedPage(name) {
   activePage.value = name;
   isCollapsed.value = !isCollapsed.value;
 }
+
+let hoverTimeout = null;
+
+function handleMouseEnter() {
+  clearTimeout(hoverTimeout);
+  isCollapsed.value = false;
+}
+
+function handleMouseLeave() {
+  hoverTimeout = setTimeout(() => {
+    isCollapsed.value = true;
+  }, 100);
+}
+
+async function logoutUser() {
+  await logout();
+
+  permissionStore.clearPermissions();
+
+  router.push("/login");
+}
 </script>
 
 <template>
-  <aside :class="['sidebar', { collapsed: isCollapsed }]">
-    <button @click="isCollapsed = !isCollapsed">
-      <icon-menu />
-      <ui-text-h2 v-if="!isCollapsed">Меню</ui-text-h2>
-    </button>
+  <aside
+    :class="['sidebar', { collapsed: isCollapsed }]"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+  >
+    <div class="logo">
+      <IconLogo :class="{ logo_open: !isCollapsed }" />
+    </div>
 
     <nav class="sidebar__nav">
       <ul>
         <router-link
-          to="/"
-          :class="[{ selected: activePage == 'orders' }]"
+          v-if="canViewOrders"
+          to="/orders"
+          :class="[{ selected: route.name === 'orders' }]"
           @click="selectedPage('orders')"
           @dblclick="isCollapsed = !isCollapsed"
         >
@@ -39,8 +87,20 @@ function selectedPage(name) {
         </router-link>
 
         <router-link
+          v-if="canViewPreOrders"
+          to="/calculate"
+          :class="[{ selected: route.name === 'calculate' }]"
+          @click="selectedPage('calculate')"
+          @dblclick="isCollapsed = !isCollapsed"
+        >
+          <icon-calculate />
+          <ui-text-h3 v-if="!isCollapsed">Просчёт</ui-text-h3>
+        </router-link>
+
+        <router-link
+          v-if="canViewWarehouse"
           to="/warehouse"
-          :class="[{ selected: activePage == 'warehouse' }]"
+          :class="[{ selected: route.name === 'warehouse' }]"
           @click="selectedPage('warehouse')"
           @dblclick="isCollapsed = !isCollapsed"
         >
@@ -49,8 +109,9 @@ function selectedPage(name) {
         </router-link>
 
         <router-link
+          v-if="canViewArrival"
           to="/arrival"
-          :class="[{ selected: activePage == 'arrival' }]"
+          :class="[{ selected: route.name === 'arrival' }]"
           @click="selectedPage('arrival')"
           @dblclick="isCollapsed = !isCollapsed"
         >
@@ -59,8 +120,9 @@ function selectedPage(name) {
         </router-link>
 
         <router-link
+          v-if="canViewDefective"
           to="/defective"
-          :class="[{ selected: activePage == 'defective' }]"
+          :class="[{ selected: route.name === 'defective' }]"
           @click="selectedPage('defective')"
           @dblclick="isCollapsed = !isCollapsed"
         >
@@ -69,8 +131,9 @@ function selectedPage(name) {
         </router-link>
 
         <router-link
+          v-if="canViewMaterials"
           to="/materials"
-          :class="[{ selected: activePage == 'materials' }]"
+          :class="[{ selected: route.name === 'materials' }]"
           @click="selectedPage('materials')"
           @dblclick="isCollapsed = !isCollapsed"
         >
@@ -79,16 +142,36 @@ function selectedPage(name) {
         </router-link>
       </ul>
     </nav>
+
+    <div class="login">
+      <router-link to="/owner">
+        <div>
+          <iconUser />
+        </div>
+      </router-link>
+
+      <div @click="logoutUser" v-if="!isCollapsed">
+        <IconLogoout />
+        <q-tooltip> Выйти из системы </q-tooltip>
+      </div>
+    </div>
   </aside>
 </template>
 
 <style lang="scss" scoped>
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 100;
+
   width: 220px;
-  padding: 50px 0;
+  padding: 80px 0;
   background: #000;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 30px;
   overflow: hidden;
   transition: width 0.3s;
@@ -98,6 +181,8 @@ function selectedPage(name) {
 
     .sidebar__nav ul li ui-text-h3 {
       display: none;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
     }
 
     button ui-text-h2 {
@@ -135,7 +220,8 @@ function selectedPage(name) {
         &.selected {
           width: 100%;
           background: white;
-
+          border-top-left-radius: 15px;
+          border-bottom-left-radius: 15px;
           h3 {
             color: black;
             font-weight: 500;
@@ -157,5 +243,41 @@ function selectedPage(name) {
       }
     }
   }
+}
+
+.login {
+  padding-right: 10px;
+  margin-top: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  a {
+    margin: 0;
+    padding: 10px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    svg {
+      width: 35px;
+      min-width: 35px;
+    }
+  }
+
+  svg {
+    width: 35px;
+    min-width: 35px;
+  }
+}
+
+.logo {
+  width: 100%;
+  transition: all 0.9s ease;
+}
+
+.logo svg {
+  width: 170px;
 }
 </style>

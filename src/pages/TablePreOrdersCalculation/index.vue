@@ -1,6 +1,6 @@
 <template>
   <div class="table__wrapper">
-    <ui-text-h1>Заказы</ui-text-h1>
+    <ui-text-h1>Просчет</ui-text-h1>
 
     <q-expansion-item label="Фильтры" icon="filter_list" expand-separator>
       <div class="q-pa-md">
@@ -123,20 +123,41 @@
                 <q-td>{{ props.pageIndex + 1 }}</q-td>
               </template>
 
-              <template v-if="col.name === 'status'">
-                <div @click.stop>
-                  <q-select
-                    v-model="props.row.status"
-                    :options="statusOptions"
+              <template v-if="col.name === 'isDraft'">
+                <q-td>
+                  <q-btn
+                    class="glossy"
+                    round
                     dense
-                    outlined
-                    emit-value
-                    map-options
-                    :class="getStatusClass(props.row.status)"
-                    @update:model-value="
-                      updateStatus(props.row.status, props.row.id)
-                    "
-                  ></q-select>
+                    disable
+                    :color="!props.row.isDraft ? 'green' : 'deep-orange'"
+                    icon="edit_document"
+                  >
+                    <q-tooltip>
+                      {{
+                        !props.row.isDraft ? "Заказан" : "На этапе просчета"
+                      }}</q-tooltip
+                    >
+                  </q-btn>
+                </q-td>
+              </template>
+
+              <template v-else-if="col.name === 'move'">
+                <div @click.stop>
+                  <q-btn
+                    icon="swap_horiz"
+                    color="secondary"
+                    round
+                    dense
+                    :disable="!props.row.isDraft"
+                    @click="moveItem(props.row)"
+                  >
+                    <q-tooltip>
+                      {{
+                        !props.row.isDraft ? "В заказaх" : "Внести в заказы"
+                      }}</q-tooltip
+                    >
+                  </q-btn>
                 </div>
               </template>
 
@@ -148,9 +169,12 @@
                     round
                     dense
                     @click="removeItem(props.row.id)"
-                  ></q-btn>
+                  >
+                    <q-tooltip>Удалить</q-tooltip>
+                  </q-btn>
                 </div>
               </template>
+
               <template v-else>
                 {{ col.value }}
               </template>
@@ -159,7 +183,7 @@
 
           <q-tr v-show="props.expand" :props="props">
             <q-td :colspan="store.columns.length">
-              <!-- <div class="q-px-md">
+              <div class="q-px-md">
                 <p><strong>Деталі замовлення:</strong></p>
                 <p>
                   Ім'я: {{ props.row.first_name }} {{ props.row.second_name }}
@@ -168,19 +192,6 @@
                 <p>Назва: {{ props.row.name }}</p>
                 <p>Дата: {{ props.row.date }}</p>
                 <p>Ціна: {{ props.row.totalPrice }} грн</p>
-              </div> -->
-
-              <div class="q-px-md">
-                <p><strong>Детали заказа:</strong></p>
-                <p>Название: {{ props.row.name }}</p>
-                <p>
-                  Имя: {{ props.row.first_name }} {{ props.row.second_name }}
-                </p>
-                <p>Телефон: {{ props.row.phone }}</p>
-                <p>Адрес: {{ props.row.address }}</p>
-                <p class="comment">Комментарий: {{ props.row.comment }}</p>
-                <p>Цена: {{ props.row.totalPrice }} грн</p>
-                <p>Дата создания: {{ props.row.createdAt }}</p>
               </div>
             </q-td>
           </q-tr>
@@ -194,44 +205,34 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
+import { usePreOrders } from "@/stores/PreOrders";
 import { useOrders } from "@/stores/Orders";
-import { usePermissionStore } from "@/stores/PermissionStore";
 import axios from "axios";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 
 const $q = useQuasar();
+const formattedDateRange = ref("01.01.2024 - 01.02.2024");
+const router = useRouter();
 const isCreated = ref(false);
 const isProcessing = ref(false);
-const router = useRouter();
-const formattedDateRange = ref("01.01.2024 - 01.02.2024");
 const pagination = ref({
   sortBy: "desc",
   descending: false,
   rowsPerPage: 20,
 });
 const searchQuery = ref("");
-const select = ref("Новый");
+const select = ref("Просчет");
+const statusOptions = ref([
+  { label: "Просчет", value: "isDraft" },
+  { label: "В заказах", value: "isPublic" },
+]);
 const selectedDateRange = ref({ from: "2024-01-01", to: "2024-02-01" });
 const showCalendar = ref(false);
-const statusOptions = [
-  { label: "Новый", value: "new" },
-  { label: "Макет", value: "layout" },
-  { label: "Принят Макет", value: "layout-accepted" },
-  { label: "Гравировка(Фронт)", value: "engraving(front)" },
-  { label: "Гравировка(Реверс)", value: "engraving(reverse)" },
-  { label: "Гравировка(Плита)", value: "engraving(plate)" },
-  { label: "Гравировка(Тумба)", value: "engraving(stand)" },
-  { label: "Фрезеровка", value: "milling" },
-  { label: "Бетонирование", value: "concreting" },
-  { label: "Укладка плитки", value: "laying-tiles" },
-  { label: "Установка", value: "installation" },
-  { label: "Завершен", value: "completed" },
-];
-const store = useOrders();
-const permissionStore = usePermissionStore();
+const store = usePreOrders();
+const storeOrders = useOrders();
 
 onMounted(async () => {
-  await store.getOrders();
+  await store.getPreOrders();
 });
 
 const formatDate = (date) => {
@@ -244,7 +245,7 @@ const updateFormattedDateRange = async (range) => {
       range.to
     )}`;
 
-    await store.getOrders(
+    await store.getPreOrders(
       null,
       selectedDateRange.value.from,
       selectedDateRange.value.to
@@ -258,53 +259,32 @@ const updateFormattedDateRange = async (range) => {
 
 function addItem() {
   router.push(
-    `/create?id=id&accountNumber=${store.rows.length + 1}&isCreated=true`
+    `/order-estimation?id=id&accountNumber=${
+      store.rows.length + 1
+    }&isCreated=true`
   );
   store.addRow();
 
   isCreated.value = true;
 }
-function getStatusClass(status) {
-  switch (status) {
-    case "new":
-      return "status-new";
-    case "layout":
-      return "status-layout";
-    case "layout-accepted":
-      return "status-accepted";
-    case "engraving(front)":
-    case "engraving(reverse)":
-    case "engraving(plate)":
-    case "engraving(stand)":
-      return "status-engraving";
-    case "milling":
-      return "status-milling";
-    case "concreting":
-      return "status-concreting";
-    case "laying-tiles":
-      return "status-laying-tiles";
-    case "installation":
-      return "status-installation";
-    case "completed":
-      return "status-completed";
-    default:
-      return "status-default";
-  }
-}
 function openOrder(id) {
   router.push(
-    permissionStore.hasPermission("can_write_orders")
-      ? `/create?id=${id}&accountNumber=${store.rows.length}&isCreated=${isCreated.value}`
-      : `/read-order?id=${id}&accountNumber=${store.rows.length}`
+    `/order-estimation?id=${id}&accountNumber=${store.rows.length}&isCreated=${isCreated.value}`
   );
 }
+function moveItem(item) {
+  store.movingPreOrderToOrder(item);
+  router.push(
+    `/create?id=id&accountNumber=${
+      storeOrders.rows.length + 1
+    }&isCreated=true&isMoved=true&preOrderId=${item.id}`
+  );
 
-async function filterStatus(status) {
-  await store.getOrders(status.value);
-  console.log(status);
+  storeOrders.addRow();
 }
+
 async function handlerSearch() {
-  await store.getOrders(null, null, null, searchQuery.value);
+  await store.getPreOrders(null, null, null, searchQuery.value);
 }
 async function removeItem(id) {
   isProcessing.value = true;
@@ -312,7 +292,7 @@ async function removeItem(id) {
 
   try {
     const response = await axios.delete(
-      `http://localhost:8000/orders/remove-order/${id}`
+      `http://localhost:8000/pre-orders/remove-order/${id}`
     );
 
     store.rows.splice(idx, 1);
@@ -340,25 +320,14 @@ async function removeItem(id) {
 async function resetFilters() {
   selectedDateRange.value = { from: "2024-01-01", to: "2024-02-01" };
   formattedDateRange.value = "01.01.2024 - 01.02.2024";
-  select.value = "Новый";
+  select.value = "Просчет";
   searchQuery.value = "";
 
-  await store.getOrders();
+  await store.getPreOrders();
 }
-async function updateStatus(status, id) {
-  console.log("Status updated for:", status);
 
-  try {
-    const response = await axios.put(
-      "http://localhost:8000/orders/change-status-order",
-      {
-        orderId: id,
-        newStatus: status,
-      }
-    );
-  } catch (error) {
-    console.error("ERROR", error);
-  }
+async function filterStatus(status) {
+  await store.getPreOrders(status.value);
 }
 </script>
 
@@ -393,59 +362,9 @@ async function updateStatus(status, id) {
   }
 }
 
-.status-new {
-  background-color: #ffecb3;
-  color: white;
-}
-
-.status-layout {
-  background-color: #bbdefb;
-  color: #000;
-}
-
-.status-accepted {
-  background-color: #c8e6c9;
-  color: #000;
-}
-
-.status-engraving {
-  background-color: #ffe0b2;
-  color: #000;
-}
-
-.status-milling {
-  background-color: #d1c4e9;
-  color: #000;
-}
-
-.status-concreting {
-  background-color: #b3e5fc;
-  color: #000;
-}
-
-.status-laying-tiles {
-  background-color: #f8bbd0;
-  color: #000;
-}
-
-.status-installation {
-  background-color: #dcedc8;
-  color: #000;
-}
-
-.status-completed {
-  background-color: #ffcdd2;
-  color: #000;
-}
-
-.status-default {
-  background-color: #e0e0e0;
-  color: #000;
-}
-
-.comment {
-  width: 100%;
-  white-space: normal;
-  overflow: visible;
+.row-border-draft {
+  width: 10px;
+  height: 100%;
+  border-left: 15px solid yellow;
 }
 </style>

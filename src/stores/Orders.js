@@ -98,8 +98,6 @@ export const useOrders = defineStore("orders", () => {
 
       rows.value = orders.data.orders;
 
-      console.log("orders.data.orders", orders.data.orders);
-
       $q.notify({
         message: "Данные успешно загружены!",
         color: "positive",

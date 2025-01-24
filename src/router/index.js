@@ -52,11 +52,11 @@ const router = createRouter({
           meta: { requiresPermission: "calculation" },
         },
 
-        // {
-        //   path: "/order-estimation",
-        //   component: () => import("../pages/PageOrderEstimation/index.vue"),
-        //   meta: { requiresPermission: "calculation" },
-        // },
+        {
+          path: "/order-estimation",
+          component: () => import("../pages/TableCreatePreOrder/index.vue"),
+          meta: { requiresPermission: "calculation" },
+        },
 
         {
           path: "/warehouse",

@@ -90,31 +90,12 @@ const openWindol = (val, id) => {
 function addItem() {
   emit("addItem", "rowsMaterials");
 }
-// function addSelectedValue(val) {
-//   const result = props.isCreated ? { ...val, isCalculation: true } : val;
-//   emit("selectValue", result, "rowsMaterials");
-//   calcTotalPrice();
-// }
-
 function addSelectedValue(val) {
-  // Знаходимо елемент з таким же warehouseId
-  const existingItem = data.find(
-    (item) => item.warehouseId === val.warehouseId
-  );
-
-  if (existingItem) {
-    // Якщо елемент існує, збільшуємо кількість
-    existingItem.quantity += val.quantity || 1;
-  } else {
-    // Якщо елементу немає, додаємо новий
-    const newItem = props.isCreated ? { ...val, isCalculation: true } : val;
-    data.push(newItem); // Додаємо новий елемент до масиву
-    emit("selectValue", newItem, "rowsMaterials"); // Відправляємо емісію
-  }
-
-  // Перераховуємо загальну вартість
+  const result = props.isCreated ? { ...val, isCalculation: true } : val;
+  emit("selectValue", result, "rowsMaterials");
   calcTotalPrice();
 }
+
 function changeQuantity(val) {
   const result = props.isCreated ? { ...val, isCalculation: true } : val;
   emit("selectValue", result, "rowsMaterials");

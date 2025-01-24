@@ -202,6 +202,7 @@ function addItem(tableName, item) {
 }
 function addSelectedValue(val, table) {
   const idx = dataTable[table].findIndex((el) => el.id === val.id);
+
   dataTable[table][idx] = val;
 
   calcTotalPrice();
@@ -226,7 +227,8 @@ function calcTotalPrice() {
   }, 0);
 
   totalPrice.value = materials + services + works;
-  finalPrice.value = formatTotalPrice.value;
+
+  formatCurrency((finalPrice.value = totalPrice.value));
 }
 function changeTab(name) {
   currentTab.value = name;

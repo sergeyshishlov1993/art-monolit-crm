@@ -138,8 +138,6 @@ export const usePreOrders = defineStore("preOrders", () => {
 
       rows.value = orders.data.orders;
 
-      console.log("RESPONSE STORE", orders);
-
       $q.notify({
         message: "Данные успешно загружены!",
         color: "positive",

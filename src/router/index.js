@@ -28,6 +28,7 @@ const router = createRouter({
 
         {
           path: "/create",
+          name: "orders-create",
           component: () => import("../pages/TableCreateOrder/index.vue"),
           meta: { requiresPermission: "can_write_order" },
         },
@@ -54,6 +55,7 @@ const router = createRouter({
 
         {
           path: "/order-estimation",
+          name: "calculate-create",
           component: () => import("../pages/TableCreatePreOrder/index.vue"),
           meta: { requiresPermission: "calculation" },
         },

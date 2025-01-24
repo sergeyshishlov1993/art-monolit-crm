@@ -96,6 +96,7 @@ function handlerFocusInput(row) {
           <q-td :props="props" class="text-center">
             <div class="actions-btn">
               <q-btn
+                v-if="!props.row.isCreated"
                 :disable="!props.row.isChanged"
                 icon="sync"
                 round

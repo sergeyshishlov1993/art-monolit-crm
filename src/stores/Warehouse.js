@@ -119,6 +119,10 @@ export const useWarehouse = defineStore("warehouse", () => {
   }
 
   async function handleAdd(item) {
+    const idx = rows.value.findIndex((el) => el.id === item.id);
+    rows.value[idx].isCreated = false;
+    rows.value[idx].isChanged = false;
+
     try {
       const response = await axios.post(
         "http://localhost:8000/warehouse/create",
@@ -128,7 +132,7 @@ export const useWarehouse = defineStore("warehouse", () => {
       );
 
       $q.notify({
-        message: "Успешно cоздано!",
+        message: `Успешно добавлен в склад ${item.name} ${item.length}X${item.width}X${item.thickness}!`,
         color: "positive",
         icon: "check_circle",
         position: "top-right",

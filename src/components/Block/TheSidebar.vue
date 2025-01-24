@@ -70,7 +70,9 @@ async function logoutUser() {
     @mouseleave="handleMouseLeave"
   >
     <div class="logo">
-      <IconLogo :class="{ logo_open: !isCollapsed }" />
+      <router-link to="/">
+        <IconLogo :class="{ logo_open: !isCollapsed }" />
+      </router-link>
     </div>
 
     <nav class="sidebar__nav">
@@ -78,7 +80,14 @@ async function logoutUser() {
         <router-link
           v-if="canViewOrders"
           to="/orders"
-          :class="[{ selected: route.name === 'orders' }]"
+          :class="[
+            {
+              selected:
+                route.name === 'orders' ||
+                route.name === 'readOrder' ||
+                route.name === 'orders-create',
+            },
+          ]"
           @click="selectedPage('orders')"
           @dblclick="isCollapsed = !isCollapsed"
         >
@@ -89,7 +98,12 @@ async function logoutUser() {
         <router-link
           v-if="canViewPreOrders"
           to="/calculate"
-          :class="[{ selected: route.name === 'calculate' }]"
+          :class="[
+            {
+              selected:
+                route.name === 'calculate' || route.name === 'calculate-create',
+            },
+          ]"
           @click="selectedPage('calculate')"
           @dblclick="isCollapsed = !isCollapsed"
         >

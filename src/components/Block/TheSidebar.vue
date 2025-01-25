@@ -212,8 +212,8 @@ async function logoutUser() {
     color: white;
 
     svg {
-      width: 35px;
-      min-width: 35px;
+      width: 28px;
+      min-width: 28px;
     }
   }
 
@@ -222,7 +222,7 @@ async function logoutUser() {
       padding: 0;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 10px;
 
       a {
         margin: 0;
@@ -251,8 +251,8 @@ async function logoutUser() {
         }
 
         svg {
-          width: 35px;
-          min-width: 35px;
+          width: 28px;
+          min-width: 28px;
         }
       }
     }
@@ -275,14 +275,14 @@ async function logoutUser() {
     gap: 10px;
 
     svg {
-      width: 35px;
-      min-width: 35px;
+      width: 28px;
+      min-width: 28px;
     }
   }
 
   svg {
-    width: 35px;
-    min-width: 35px;
+    width: 28px;
+    min-width: 28px;
   }
 }
 

@@ -241,7 +241,7 @@ onMounted(() => {
               dense
               borderless
               @update:modelValue="
-                emitValue(props.row, props.row.name, props.row.id)
+                emitValue(props.row, props.row.price, props.row.id)
               "
             />
           </q-td>

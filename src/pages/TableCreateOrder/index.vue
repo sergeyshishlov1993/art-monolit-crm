@@ -165,23 +165,7 @@ onMounted(async () => {
   }
 
   if (isMoved.value) {
-    const { address, comment, first_name, second_name, name, phone } =
-      storePreOrder.movedPreOrders;
-
-    totalPrice.value = storePreOrder.movedPreOrders.totalPrice;
-    dataTable.customer = {
-      address,
-      comment,
-      first_name,
-      second_name,
-      name,
-      phone,
-      status: "new",
-    };
-
-    dataTable.rowsMaterials = storePreOrder.movedPreOrders.PreOrderMaterials;
-    dataTable.rowsServices = storePreOrder.movedPreOrders.PreOrderServices;
-    dataTable.rowsWorks = storePreOrder.movedPreOrders.PreOrderWorks;
+    addMovedOrder();
   }
 });
 
@@ -199,6 +183,25 @@ function addItem(tableName, item) {
       })
     );
   }
+}
+function addMovedOrder() {
+  const { address, comment, first_name, second_name, name, phone } =
+    storePreOrder.movedPreOrders;
+
+  totalPrice.value = storePreOrder.movedPreOrders.totalPrice;
+  dataTable.customer = {
+    address,
+    comment,
+    first_name,
+    second_name,
+    name,
+    phone,
+    status: "new",
+  };
+
+  dataTable.rowsMaterials = storePreOrder.movedPreOrders.PreOrderMaterials;
+  dataTable.rowsServices = storePreOrder.movedPreOrders.PreOrderServices;
+  dataTable.rowsWorks = storePreOrder.movedPreOrders.PreOrderWorks;
 }
 function addSelectedValue(val, table) {
   const idx = dataTable[table].findIndex((el) => el.id === val.id);
@@ -508,11 +511,12 @@ function removeItem(table, id) {
 
   calcTotalPrice();
 }
+
 function updateInput(table, id, row, fieldName) {
   const idx = dataTable[table].findIndex((el) => el.id === id);
+  const key = Object.keys(row).find((k) => row[k] === fieldName);
 
-  dataTable[table][idx][fieldName] = row[fieldName];
-
+  dataTable[table][idx][key] = row[key];
   calcTotalPrice();
 }
 
@@ -566,56 +570,32 @@ async function saveOrder() {
 
   try {
     isProcessing.value = true;
-    if (!isOrderCreated.value) {
-      const response = await axios.post("http://localhost:8000/orders/create", {
-        orderData: order,
-        orderDeads: order.dataTable.rowsDead,
-        orderMaterials: order.dataTable.rowsMaterials,
-        orderServices: order.dataTable.rowsServices,
-        orderWorks: order.dataTable.rowsWorks,
-      });
 
-      $q.notify({
-        message: "Замовлення створено успішно!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
+    if (!isOrderCreated.value) {
+      await store.createOrder(
+        order,
+        order.dataTable.rowsDead,
+        order.dataTable.rowsMaterials,
+        order.dataTable.rowsServices,
+        order.dataTable.rowsWorks
+      );
 
       if (isMoved.value) {
-        try {
-          const response = axios.put(
-            `http://localhost:8000/pre-orders/update-preorder-status/${route.query.preOrderId}`
-          );
-
-          console.log("pre order move", response);
-        } catch (error) {
-          console.error("error", error);
-        }
+        await store.movePreOrderToOrder(route.query.preOrderId);
       }
 
       router.push("/orders");
     } else {
       isProcessing.value = true;
-      const response = await axios.put(
-        `http://localhost:8000/orders/update/${route.query.id}`,
-        {
-          orderData: order,
-          orderDeads: order.dataTable.rowsDead,
-          orderMaterials: order.dataTable.rowsMaterials,
-          orderServices: order.dataTable.rowsServices,
-          orderWorks: order.dataTable.rowsWorks,
-        }
-      );
 
-      $q.notify({
-        message: "Замовлення оновлено успішно!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
+      await store.updateOrder(
+        route.query.id,
+        order,
+        order.dataTable.rowsDead,
+        order.dataTable.rowsMaterials,
+        order.dataTable.rowsServices,
+        order.dataTable.rowsWorks
+      );
     }
 
     isOrderCreated.value = false;
@@ -624,7 +604,7 @@ async function saveOrder() {
     router.push("/orders");
   } catch (error) {
     $q.notify({
-      message: `Помилка: ${error.response?.data?.message || error.message}`,
+      message: `Ошибка: ${error.response?.data?.message || error.message}`,
       color: "negative",
       icon: "error",
       position: "top-right",
@@ -678,7 +658,7 @@ async function saveOrder() {
     </keep-alive>
 
     <div class="q-pa-md">
-      <UiTextH2 class="table__title customer">Заказчик</UiTextH2>
+      <UiTextH2 class="table__title">Заказчик</UiTextH2>
 
       <div class="wrapper">
         <div class="customer">
@@ -809,17 +789,16 @@ async function saveOrder() {
 
 <style lang="scss" scoped>
 .table__wrapper {
+  gap: 30px;
+  display: flex;
   padding-top: 20px;
+  flex-direction: column;
 
   h1 {
-    text-align: center;
     font-size: 34px;
     font-weight: 600;
+    text-align: center;
   }
-
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
 }
 
 .form {
@@ -828,14 +807,14 @@ async function saveOrder() {
 }
 
 .wrapper {
-  display: flex;
   gap: 50px;
+  display: flex;
 
   .customer {
-    display: flex;
-    flex-direction: column;
     gap: 15px;
     width: 100%;
+    display: flex;
+    flex-direction: column;
 
     h2 {
       font-weight: 500;
@@ -843,10 +822,10 @@ async function saveOrder() {
   }
 
   .info-by-order {
-    display: flex;
-    flex-direction: column;
     gap: 30px;
     width: 100%;
+    display: flex;
+    flex-direction: column;
 
     h2 {
       font-weight: 500;
@@ -855,15 +834,10 @@ async function saveOrder() {
 }
 
 .table__title {
-  text-align: center;
-  font-weight: 500;
   font-size: 25px;
+  font-weight: 500;
+  text-align: center;
   margin-bottom: 50px;
-}
-
-.customer {
-  text-align: justify;
-  font-weight: 600;
 }
 
 .button {
@@ -877,56 +851,56 @@ async function saveOrder() {
 
 .q-td {
   height: 50px;
-  position: relative;
   overflow-y: auto;
+  position: relative;
 }
 
 .tabs {
-  position: relative;
-  padding: 64px 0 34px 0;
   display: flex;
+  position: relative;
   align-items: center;
+  padding: 64px 0 34px 0;
   justify-content: space-around;
   border-bottom: 1px solid rgba(216, 216, 216, 1);
 }
 
 .total-summary {
-  padding: 0 50px;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
+  display: flex;
   font-size: 18px;
+  padding: 0 50px;
+  flex-direction: column;
 
   &__row {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e0e0e0;
     padding: 5px 0;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e0e0e0;
 
     &:last-child {
       border-bottom: none;
     }
 
     &--final {
-      font-weight: bold;
       font-size: 20px;
       margin-top: 10px;
+      font-weight: bold;
     }
   }
 
   .input-price {
-    width: 100px;
-    text-align: right;
-    font-size: 18px;
     padding: 5px;
+    width: 100px;
+    font-size: 18px;
+    text-align: right;
   }
 }
 
 .button-group {
   display: flex;
+  padding-top: 50px;
   justify-content: end;
   border-top: 2px grey solid;
-  padding-top: 50px;
 }
 </style>

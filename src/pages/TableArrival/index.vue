@@ -3,7 +3,6 @@ import { ref, onMounted, watch } from "vue";
 import { useArrival } from "@/stores/Arrival";
 import debounce from "lodash/debounce";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
-import UiInput from "@/components/Ui/UiInput.vue";
 
 const storeArrival = useArrival();
 const searchQuery = ref("");
@@ -18,10 +17,14 @@ watch(searchQuery, (newValue) => {
   debouncedSearch(newValue);
 });
 
+async function clearTableArrival() {
+  await storeArrival.clearTableArrival();
+
+  storeArrival.rows = [];
+}
 async function fetchSearchResults(query) {
   await storeArrival.fetchMaterialsData(query);
 }
-
 async function handleUpdate(row) {
   try {
     await storeArrival.handleUpdate(row);
@@ -37,12 +40,6 @@ function handlerFocusInput(row) {
   if (!row.isCreated) {
     debouncedUpdate(row);
   }
-}
-
-async function clearTableArrival() {
-  await storeArrival.clearTableArrival();
-
-  storeArrival.rows = [];
 }
 </script>
 
@@ -120,6 +117,7 @@ async function clearTableArrival() {
                 dense
                 ripple
                 @click="storeArrival.handleUpdate(props.row)"
+                v-if="!props.row.isCreated"
               >
                 <q-tooltip>Изменить</q-tooltip>
               </q-btn>
@@ -172,21 +170,22 @@ async function clearTableArrival() {
 
 <style lang="scss" scoped>
 .table__wrapper {
-  h1 {
-    text-align: center;
-    font-size: 34px;
-    font-weight: 600;
-  }
+  gap: 50px;
   display: flex;
   flex-direction: column;
-  gap: 50px;
+
+  h1 {
+    font-size: 34px;
+    font-weight: 600;
+    text-align: center;
+  }
 }
 
 .settings {
+  gap: 30px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 30px;
 
   .input-search {
     width: 400px;
@@ -194,14 +193,14 @@ async function clearTableArrival() {
 }
 
 .button-group {
-  display: flex;
-  justify-content: flex-end;
   gap: 10px;
   padding: 10px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .actions-btn {
-  display: flex;
   gap: 10px;
+  display: flex;
 }
 </style>

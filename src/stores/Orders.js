@@ -83,6 +83,23 @@ export const useOrders = defineStore("orders", () => {
 
   const rows = ref([]);
 
+  async function createOrder(orderData, deads, materials, services, works) {
+    const response = await axios.post("http://localhost:8000/orders/create", {
+      orderData: orderData,
+      orderDeads: deads,
+      orderMaterials: materials,
+      orderServices: services,
+      orderWorks: works,
+    });
+
+    $q.notify({
+      message: "Замовлення створено успішно!",
+      color: "positive",
+      icon: "check_circle",
+      position: "top-right",
+      timeout: 2500,
+    });
+  }
   async function getOrders(status, startDate, endDate, search) {
     try {
       const params = {
@@ -117,7 +134,6 @@ export const useOrders = defineStore("orders", () => {
     } finally {
     }
   }
-
   async function getOrdersById(orderId) {
     try {
       const orders = await axios.get(`http://localhost:8000/orders/${orderId}`);
@@ -142,6 +158,39 @@ export const useOrders = defineStore("orders", () => {
       });
     } finally {
     }
+  }
+  async function movePreOrderToOrder(id) {
+    try {
+      const response = axios.put(
+        `http://localhost:8000/pre-orders/update-preorder-status/${id}`
+      );
+
+      console.log("pre order move", response);
+    } catch (error) {
+      console.error("error", error);
+    }
+  }
+  async function updateOrder(id, order, deads, materials, services, works) {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/orders/update/${id}`,
+        {
+          orderData: order,
+          orderDeads: deads,
+          orderMaterials: materials,
+          orderServices: services,
+          orderWorks: works,
+        }
+      );
+
+      $q.notify({
+        message: `${order.name} успешно был обновлен!`,
+        color: "positive",
+        icon: "check_circle",
+        position: "top-right",
+        timeout: 2500,
+      });
+    } catch (error) {}
   }
 
   function formatDate(dateString) {
@@ -184,10 +233,13 @@ export const useOrders = defineStore("orders", () => {
 
   return {
     columns,
+    createOrder,
     rows,
     addRow,
     getOrders,
     getCurrentDate,
     getOrdersById,
+    movePreOrderToOrder,
+    updateOrder,
   };
 });

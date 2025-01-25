@@ -49,6 +49,7 @@
                 type="string"
                 dense
                 borderless
+                @focus="touchInput(props.row)"
               />
             </template>
           </q-td>
@@ -86,7 +87,8 @@
               </q-btn>
 
               <q-btn
-                :disable="props.row.isChanged"
+                v-if="!props.row.isCreated"
+                :disable="!props.row.isChanged"
                 icon="sync"
                 round
                 glossy
@@ -143,6 +145,10 @@ function getPermissionIds(row) {
 
   return permissionKeys.filter((key) => row[key]);
 }
+
+const touchInput = (row) => {
+  row.isChanged = true;
+};
 </script>
 
 <style lang="scss" scoped>

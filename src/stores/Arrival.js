@@ -100,6 +100,7 @@ export const useArrival = defineStore("arrival", () => {
       defective: 0,
       createdAt: new Date(),
       isCreated: true,
+      isChanged: false,
     });
   }
   function getCurrentDate() {
@@ -183,6 +184,10 @@ export const useArrival = defineStore("arrival", () => {
         position: "top-right",
         timeout: 2500,
       });
+
+      const idx = rows.value.findIndex((el) => el.id === item.id);
+      rows.value[idx].isCreated = false;
+      rows.value[idx].isChanged = false;
     } catch (error) {
       console.error("error", error);
 
@@ -224,32 +229,32 @@ export const useArrival = defineStore("arrival", () => {
     }
   }
   async function handleDelete(row) {
-    const index = rows.value.findIndex((item) => item.id === row.id);
+    if (row.id && !row.isCreated) {
+      try {
+        const response = await axios.delete(
+          `http://localhost:8000/arrival/delete/${row.id}`
+        );
+        rows.value = rows.value.filter((r) => r !== row);
 
-    if (index !== -1) {
-      rows.value.splice(index, 1);
-    }
-    try {
-      const response = await axios.delete(
-        `http://localhost:8000/arrival/delete/${row.id}`
-      );
+        $q.notify({
+          message: `Позиция ${row.name} ${row.length}X${row.width}X${row.thickness} удалена!`,
+          color: "positive",
+          icon: "check_circle",
+          position: "top-right",
+          timeout: 2500,
+        });
+      } catch (error) {
+        console.error("Ошибка удаления:", error);
 
-      $q.notify({
-        message: `Позиция ${row.name} ${row.length}X${row.width}X${row.thickness} удалена!`,
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
-    } catch (error) {
-      console.error("Ошибка удаления:", error);
-
-      $q.notify({
-        message: `Ошибка: ${error.response?.data?.message || error.message}`,
-        color: "negative",
-        icon: "error",
-        timeout: 3000,
-      });
+        $q.notify({
+          message: `Ошибка: ${error.response?.data?.message || error.message}`,
+          color: "negative",
+          icon: "error",
+          timeout: 3000,
+        });
+      }
+    } else {
+      rows.value = rows.value.filter((r) => r !== row);
     }
   }
 

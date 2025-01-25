@@ -196,6 +196,7 @@ export const useOwner = defineStore("owner", () => {
       warehouse: "",
       createdAt: new Date(),
       isCreated: true,
+      isChanged: false,
     });
   }
   function addRowUser() {
@@ -208,8 +209,10 @@ export const useOwner = defineStore("owner", () => {
       role: "",
       createdAt: new Date(),
       isCreated: true,
+      isChanged: false,
     });
   }
+
   function formatDate(dateString) {
     const date = new Date(dateString);
 
@@ -242,6 +245,7 @@ export const useOwner = defineStore("owner", () => {
 
       const idx = rowsUser.value.findIndex((el) => el.id === row.id);
       rowsUser.value[idx].isCreated = false;
+      rowsUser.value[idx].isChanged = false;
 
       return response.data;
     } catch (err) {
@@ -273,6 +277,10 @@ export const useOwner = defineStore("owner", () => {
         position: "top-right",
         timeout: 2500,
       });
+
+      const idx = rowsRole.value.findIndex((el) => el.id === row.id);
+      rowsRole.value[idx].isCreated = false;
+      rowsRole.value[idx].isChanged = false;
 
       return response.data;
     } catch (err) {
@@ -387,7 +395,7 @@ export const useOwner = defineStore("owner", () => {
     }
   }
   async function handleDeleteRole(row) {
-    if (row.id) {
+    if (row.id && !row.isCreated) {
       try {
         await axios.delete(`http://localhost:8000/owner/delete-role/${row.id}`);
         rowsRole.value = rowsRole.value.filter((r) => r.id !== row.id);
@@ -414,11 +422,10 @@ export const useOwner = defineStore("owner", () => {
     }
   }
   async function handleDeleteUser(row) {
-    if (row.id) {
+    if (row.id && !row.isCreated) {
       try {
         await axios.delete(`http://localhost:8000/owner/delete-user/${row.id}`);
         rowsUser.value = rowsUser.value.filter((r) => r.id !== row.id);
-
         $q.notify({
           message: "Удалено !",
           color: "positive",

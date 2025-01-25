@@ -18,7 +18,7 @@ const router = useRouter();
 
 const accountNumber = ref(route.query.accountNumber);
 const currentTab = ref("");
-const dataTable = reactive({
+const dataTable = ref({
   customer: {
     name: "",
     first_name: "",
@@ -90,11 +90,14 @@ const activeTabComponent = computed(() => {
 const activeTabProps = computed(() => {
   switch (currentTab.value) {
     case "Материалы":
-      return { rows: dataTable.rowsMaterials, isCreated: isOrderCreated.value };
+      return {
+        rows: dataTable.value.rowsMaterials,
+        isCreated: isOrderCreated.value,
+      };
     case "Виды работ":
-      return { rows: dataTable.rowsWorks };
+      return { rows: dataTable.value.rowsWorks };
     case "Услуги":
-      return { rows: dataTable.rowsServices };
+      return { rows: dataTable.value.rowsServices };
     default:
       return {};
   }
@@ -107,75 +110,44 @@ onMounted(async () => {
   if (isOrderCreated.value) {
     await getOrder();
   }
-
-  // if (isMoved.value) {
-  //   const { address, comment, first_name, second_name, name, phone } =
-  //     storePreOrder.movedPreOrders;
-
-  //   totalPrice.value = storePreOrder.movedPreOrders.totalPrice;
-  //   dataTable.customer = {
-  //     address,
-  //     comment,
-  //     first_name,
-  //     second_name,
-  //     name,
-  //     phone,
-  //     status: "new",
-  //   };
-
-  //   dataTable.rowsMaterials = storePreOrder.movedPreOrders.PreOrderMaterials;
-  //   dataTable.rowsServices = storePreOrder.movedPreOrders.PreOrderServices;
-  //   dataTable.rowsWorks = storePreOrder.movedPreOrders.PreOrderWorks;
-  // }
 });
 
 function addItem(tableName, item) {
-  // console.log("ADD ITEM", item);
-  // if (tableName === "rowsWorks") {
-  //   dataTable.rowsWorks.push(item);
-  // } else {
-  //   dataTable[tableName].push(
-  //     reactive({
-  //       id: crypto.randomUUID(),
-  //       accountNumber: dataTable[tableName].length + 1,
-  //       name: "Выбрать",
-  //       quantity: 1,
-  //       price: 0,
-  //     })
-  //   );
-  // }
-
-  dataTable[tableName].push(
-    reactive({
-      id: crypto.randomUUID(),
-      accountNumber: dataTable[tableName].length + 1,
-      name: "Выбрать",
-      quantity: 1,
-      price: 0,
-    })
-  );
+  if (tableName === "rowsWorks") {
+    dataTable.value.rowsWorks.push(item);
+  } else {
+    dataTable[tableName].push(
+      reactive({
+        id: crypto.randomUUID(),
+        accountNumber: dataTable[tableName].length + 1,
+        name: "Выбрать",
+        quantity: 1,
+        price: 0,
+      })
+    );
+  }
 }
 function addSelectedValue(val, table) {
-  const idx = dataTable[table].findIndex((el) => el.id === val.id);
+  const idx = dataTable.value[table].findIndex((el) => el.id === val.id);
 
-  dataTable[table][idx] = val;
+  dataTable.value[table][idx] = val;
 
   calcTotalPrice();
 }
 function calcTotalPrice() {
-  const materials = dataTable.rowsMaterials.reduce((acc, row) => {
+  const materials = dataTable.value.rowsMaterials.reduce((acc, row) => {
     const price = parseFloat(row.price) || 0;
     const qty = parseFloat(row.quantity) || 1;
     return acc + price * qty;
   }, 0);
 
-  const services = dataTable.rowsServices.reduce((acc, row) => {
+  const services = dataTable.value.rowsServices.reduce((acc, row) => {
     const price = parseFloat(row.price) || 0;
     const qty = parseFloat(row.quantity) || 1;
     return acc + price * qty;
   }, 0);
 
-  const works = dataTable.rowsWorks.reduce((acc, row) => {
+  const works = dataTable.value.rowsWorks.reduce((acc, row) => {
     const price = parseFloat(row.price) || 0;
     const qty = parseFloat(row.quantity) || 1;
     return acc + price * qty;
@@ -184,12 +156,14 @@ function calcTotalPrice() {
   totalPrice.value = materials + services + works;
 
   formatCurrency((finalPrice.value = totalPrice.value));
+
+  console.log("dataTable.rowsWorks", dataTable.value.rowsWorks);
 }
 function changeTab(name) {
   currentTab.value = name;
 }
 function createCell(table, val, id) {
-  dataTable[table] = val;
+  dataTable.value[table] = val;
 
   calcTotalPrice();
 }
@@ -198,23 +172,24 @@ function selectSource(select) {
   selectSource.value = select;
 }
 function removeItem(table, id) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
+  const idx = dataTable.value[table].findIndex((el) => el.id === id);
 
   if (idx !== -1) {
-    dataTable[table].splice(idx, 1);
+    dataTable.value[table].splice(idx, 1);
 
-    dataTable[table].forEach((item, index) => {
+    dataTable.value[table].forEach((item, index) => {
       item.accountNumber = index + 1;
     });
   }
 
   calcTotalPrice();
 }
+
 function updateInput(table, id, row, fieldName) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
+  const idx = dataTable.value[table].findIndex((el) => el.id === id);
+  const key = Object.keys(row).find((k) => row[k] === fieldName);
 
-  dataTable[table][idx][fieldName] = row[fieldName];
-
+  dataTable.value[table][idx][key] = row[key];
   calcTotalPrice();
 }
 
@@ -223,15 +198,13 @@ async function getOrder() {
     `http://localhost:8000/pre-orders/${route.query.id}`
   );
 
-  console.log("RESPONSE PRE ORDERS", response);
-
   order.value = response.data.order;
   finalPrice.value = +order.value.totalPrice;
 
   const { address, comment, first_name, second_name, name, phone } =
     order.value;
 
-  dataTable.customer = {
+  dataTable.value.customer = {
     address,
     comment,
     first_name,
@@ -239,9 +212,9 @@ async function getOrder() {
     name,
     phone,
   };
-  dataTable.rowsMaterials = order.value.PreOrderMaterials;
-  dataTable.rowsServices = order.value.PreOrderServices;
-  dataTable.rowsWorks = order.value.PreOrderWorks;
+  dataTable.value.rowsMaterials = order.value.PreOrderMaterials;
+  dataTable.value.rowsServices = order.value.PreOrderServices;
+  dataTable.value.rowsWorks = order.value.PreOrderWorks;
 }
 
 async function saveOrder() {
@@ -249,7 +222,7 @@ async function saveOrder() {
 
   const order = {
     id: crypto.randomUUID(),
-    ...dataTable.customer,
+    ...dataTable.value.customer,
     isDraft: true,
     isPublick: false,
     source: selectedSource.value,
@@ -257,9 +230,9 @@ async function saveOrder() {
     currentData: storePreOrder.getCurrentDate(),
 
     dataTable: {
-      rowsMaterials: dataTable.rowsMaterials,
-      rowsServices: dataTable.rowsServices,
-      rowsWorks: dataTable.rowsWorks,
+      rowsMaterials: dataTable.value.rowsMaterials,
+      rowsServices: dataTable.value.rowsServices,
+      rowsWorks: dataTable.value.rowsWorks,
     },
   };
 
@@ -270,9 +243,9 @@ async function saveOrder() {
         "http://localhost:8000/pre-orders/create-preorder",
         {
           preOrderData: order,
-          preOrderMaterials: order.dataTable.rowsMaterials,
-          preOrderServices: order.dataTable.rowsServices,
-          preOrderWorks: order.dataTable.rowsWorks,
+          preOrderMaterials: order.dataTable.value.rowsMaterials,
+          preOrderServices: order.dataTable.value.rowsServices,
+          preOrderWorks: order.dataTable.value.rowsWorks,
         }
       );
 
@@ -291,9 +264,9 @@ async function saveOrder() {
         `http://localhost:8000/pre-orders/update-preorder/${route.query.id}`,
         {
           preOrderData: order,
-          preOrderMaterials: order.dataTable.rowsMaterials,
-          preOrderServices: order.dataTable.rowsServices,
-          preOrderWorks: order.dataTable.rowsWorks,
+          preOrderMaterials: order.dataTable.value.rowsMaterials,
+          preOrderServices: order.dataTable.value.rowsServices,
+          preOrderWorks: order.dataTable.value.rowsWorks,
         }
       );
 

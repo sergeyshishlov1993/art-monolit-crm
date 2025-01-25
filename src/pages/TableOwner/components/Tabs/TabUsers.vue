@@ -57,6 +57,7 @@
               type="string"
               dense
               borderless
+              @focus="touchInput(props.row)"
             ></q-input>
           </q-td>
         </template>
@@ -81,6 +82,7 @@
               </q-btn>
 
               <q-btn
+                :disable="!props.row.isChanged"
                 icon="sync"
                 round
                 glossy
@@ -93,6 +95,7 @@
                     selectedRoleId: selectedRoles[props.row.id],
                   })
                 "
+                v-if="!props.row.isCreated"
               >
                 <q-tooltip>Изменить</q-tooltip>
               </q-btn>
@@ -115,8 +118,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { useOwner } from "@/stores/Owner";
+
 const storeOwner = useOwner();
 const pagination = ref({
   sortBy: "desc",
@@ -144,6 +148,10 @@ onMounted(() => {
 
   storeOwner.getAllRows();
 });
+
+const touchInput = (row) => {
+  row.isChanged = true;
+};
 
 function addNewUser() {
   storeOwner.addRowRole();

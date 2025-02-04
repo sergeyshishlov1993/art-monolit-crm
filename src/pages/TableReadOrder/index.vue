@@ -14,10 +14,9 @@ import TabMaterials from "./components/Tabs/TabMaterials.vue";
 import TabTypeWork from "./components/Tabs/TabTypeWork.vue";
 import TabServices from "./components/Tabs/TabServices.vue";
 import TabDead from "./components/Tabs/TabDead.vue";
+import TabPhotos from "@/components/Block/Tabs/TabPhotos/index.vue";
 
-const $q = useQuasar();
 const route = useRoute();
-const router = useRouter();
 
 const activeTabComponent = computed(() => {
   switch (currentTab.value) {
@@ -35,6 +34,8 @@ const activeTabComponent = computed(() => {
 
     case "Услуги":
       return TabServices;
+    case "Фото":
+      return TabPhotos;
   }
 });
 const activeTabProps = computed(() => {
@@ -51,6 +52,8 @@ const activeTabProps = computed(() => {
       return { rows: dataTable.rowsWorks };
     case "Услуги":
       return { rows: dataTable.rowsServices };
+    case "Фото":
+      return { rows: dataTable.rowsPhotos };
     default:
       return {};
   }
@@ -115,9 +118,9 @@ const dataTable = reactive({
       price: 0,
     },
   ],
-});
 
-const order = ref({});
+  rowsPhotos: { carvings: [], artistic: [] },
+});
 
 const store = useOrders();
 
@@ -127,6 +130,7 @@ const tabs = [
   { name: "Материалы" },
   { name: "Виды работ" },
   { name: "Услуги" },
+  { name: "Фото" },
 ];
 
 onMounted(async () => {
@@ -138,11 +142,23 @@ function changeTab(name) {
   currentTab.value = name;
 }
 
+function sortPhotos(orderPhotoLinks) {
+  const sorted = orderPhotoLinks.map((photo) => {
+    dataTable.rowsPhotos[photo.type].push(photo);
+  });
+
+  return {
+    carvings: sorted.carvings || [],
+    artistic: sorted.artistic || [],
+  };
+}
+
 function sortDataOrder() {
   dataTable.rowsDead = store.rows.OrderDeads;
   dataTable.rowsMaterials = store.rows.OrderMaterials;
   dataTable.rowsServices = store.rows.OrderServices;
   dataTable.rowsWorks = store.rows.OrderWorks;
+  sortPhotos(store.rows.OrderPhotoLinks);
   dataTable.rowsCustomer = {
     id: store.rows.id,
     firstName: store.rows.first_name,
@@ -156,6 +172,17 @@ function sortDataOrder() {
 </script>
 
 <template>
+  <q-breadcrumbs class="text-grey-8 breadcrumbs" align="left">
+    <template #separator>
+      <q-icon name="chevron_right" color="grey" />
+    </template>
+
+    <q-breadcrumbs-el to="/orders" clickable> Заказы </q-breadcrumbs-el>
+    <q-breadcrumbs-el to="/create" clickable>
+      Заказ {{ accountNumber }} ({{ store.rows.name }})
+    </q-breadcrumbs-el>
+  </q-breadcrumbs>
+
   <div class="table__wrapper">
     <UiTextH1>Заказ №{{ accountNumber }}</UiTextH1>
 

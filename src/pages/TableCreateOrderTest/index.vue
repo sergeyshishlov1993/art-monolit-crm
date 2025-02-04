@@ -1,14 +1,16 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
+import { useOrders } from "@/stores/Orders";
 import { usePreOrders } from "@/stores/PreOrders";
-import { useValidation } from "@/composables/useValidation";
-import axios from "axios";
+import { useUserStore } from "@/stores/User";
 
+import TabDead from "@/components/Block/Tabs/TabDead.vue";
 import TabMaterials from "@/components/Block/Tabs/TabMaterials.vue";
 import TabTypeWork from "@/components/Block/Tabs/TabTypeWork.vue";
 import TabServices from "@/components/Block/Tabs/TabServices.vue";
+import TabPhotos from "@/components/Block/Tabs/TabPhotos/index.vue";
 import TheTabs from "@/components/Block/TheTabs.vue";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 import UiTextH2 from "@/components/Ui/UiTextH2.vue";
@@ -16,10 +18,13 @@ import UiTextH2 from "@/components/Ui/UiTextH2.vue";
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
-const { validateCustomerData } = useValidation($q);
+const store = useOrders();
+const storePreOrder = usePreOrders();
+const userStore = useUserStore();
 
 const accountNumber = ref(route.query.accountNumber);
-const currentTab = ref("");
+const currentTab = ref("Умерший");
+
 const dataTable = reactive({
   customer: {
     name: "",
@@ -30,6 +35,18 @@ const dataTable = reactive({
     comment: "",
     status: "new",
   },
+
+  rowsDead: [
+    {
+      id: crypto.randomUUID(),
+      accountNumber: 1,
+      deadName: "",
+      deadSecondName: "",
+      deadSurName: "",
+      deadDateBirth: "",
+      deadDateDeath: "",
+    },
+  ],
 
   rowsMaterials: [
     {
@@ -58,152 +75,158 @@ const dataTable = reactive({
       price: 0,
     },
   ],
+  rowsPhotos: { carvings: [], artistic: [] },
 });
-const finalPrice = ref(0);
-const isProcessing = ref(false);
-const isOrderCreated = ref(route.query.isCreated === "false");
+
+const isPublic = ref(false);
 const order = ref({});
 const selectedSource = ref("Магазин");
 const source = ["Google", "Facebook", "Instagram", "Рекомендация", "Магазин"];
-const storePreOrder = usePreOrders();
+
 const tabs = [
+  { name: "Умерший" },
   { name: "Материалы" },
   { name: "Виды работ" },
   { name: "Услуги" },
+  { name: "Фото" },
 ];
-const totalPrice = ref(0);
 
-const formatCurrency = (value) => {
-  return parseFloat(value || 0).toLocaleString("ru-RU");
-};
+import { useOrderManagement } from "./composables/useOrderManagement";
+import { useCalcTotalPrice } from "./composables/useCalcTotalPrice";
+import { useTableManagement } from "./composables/useTableManagement";
+import { usePDFGenerator } from "./composables/usePDFGenerator";
+
+const {
+  calcFinalPrice,
+  calcTotalPrice,
+  formatFinalPrice,
+  formattedPrepayment,
+  formatSale,
+  formatTotalPrice,
+  totalPrice,
+  finalPrice,
+  sale,
+  prepayment,
+} = useCalcTotalPrice(dataTable);
+
+const { addItem, removeItem, updateInput, createCell, addSelectedValue } =
+  useTableManagement(dataTable, calcTotalPrice);
+
+const {
+  addMovedOrder,
+  saveOrder,
+  isProcessing,
+  isMoved,
+  isOrderCreated,
+  sortPhotos,
+  addPhoto,
+} = useOrderManagement(
+  dataTable,
+  store,
+  $q,
+  selectedSource,
+  userStore,
+  totalPrice,
+  finalPrice,
+  prepayment,
+  sale,
+  route,
+  router,
+  isPublic
+);
+
+const { generatePDF } = usePDFGenerator(
+  accountNumber,
+  dataTable,
+  totalPrice,
+  prepayment,
+  sale,
+  finalPrice
+);
 
 const activeTabComponent = computed(() => {
   switch (currentTab.value) {
     case "Материалы":
       return TabMaterials;
-
+    case "Умерший":
+      return TabDead;
     case "Виды работ":
       return TabTypeWork;
-
     case "Услуги":
       return TabServices;
+    case "Фото":
+      return TabPhotos;
   }
 });
 const activeTabProps = computed(() => {
   switch (currentTab.value) {
+    case "Умерший":
+      return { rows: dataTable.rowsDead };
     case "Материалы":
-      return {
-        rows: dataTable.rowsMaterials,
-        isCreated: isOrderCreated.value,
-      };
+      return { rows: dataTable.rowsMaterials, isCreated: isOrderCreated.value };
     case "Виды работ":
       return { rows: dataTable.rowsWorks };
     case "Услуги":
       return { rows: dataTable.rowsServices };
+    case "Фото":
+      return { rows: dataTable.rowsPhotos };
     default:
       return {};
   }
 });
-const formatFinalPrice = computed(() => {
-  return formatCurrency(finalPrice.value);
-});
 
 onMounted(async () => {
+  userStore.loadUserFromStorage();
+
   if (isOrderCreated.value) {
-    await getOrder();
+    await distributeData();
+
+    store.clearDraft();
+  }
+
+  const savedData = store.getSavedDraft();
+  if (!order.value.isPublic && savedData) {
+    Object.assign(dataTable, savedData);
+
+    totalPrice.value = savedData.totalPrice;
+    prepayment.value = savedData.prepayment;
+    finalPrice.value = savedData.finalPrice;
+    sale.value = savedData.sale;
+    $q.notify({
+      message: "Черновик заказа восстановлен",
+      color: "positive",
+      icon: "restore",
+      position: "top-right",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  if (isMoved.value) {
+    addMovedOrder(storePreOrder.movedPreOrders);
   }
 });
 
-function addItem(tableName, item) {
-  if (tableName === "rowsWorks") {
-    dataTable.rowsWorks.push(item);
-  } else {
-    dataTable[tableName].push(
-      reactive({
-        id: crypto.randomUUID(),
-        accountNumber: dataTable[tableName].length + 1,
-        name: "Выбрать",
-        quantity: 1,
-        price: 0,
-      })
-    );
-  }
-}
-function addSelectedValue(val, table) {
-  const idx = dataTable[table].findIndex((el) => el.id === val.id);
-
-  dataTable[table][idx] = val;
-
-  calcTotalPrice();
-}
-function calcTotalPrice() {
-  const materials = dataTable.rowsMaterials.reduce((acc, row) => {
-    const price = parseFloat(row.price) || 0;
-    const qty = parseFloat(row.quantity) || 1;
-    return acc + price * qty;
-  }, 0);
-
-  const services = dataTable.rowsServices.reduce((acc, row) => {
-    const price = parseFloat(row.price) || 0;
-    const qty = parseFloat(row.quantity) || 1;
-    return acc + price * qty;
-  }, 0);
-
-  const works = dataTable.rowsWorks.reduce((acc, row) => {
-    const price = parseFloat(row.price) || 0;
-    const qty = parseFloat(row.quantity) || 1;
-    return acc + price * qty;
-  }, 0);
-
-  totalPrice.value = materials + services + works;
-
-  formatCurrency((finalPrice.value = totalPrice.value));
-}
 function changeTab(name) {
   currentTab.value = name;
 }
-function createCell(table, val, id) {
-  dataTable[table] = val;
-
-  calcTotalPrice();
-}
 
 function selectSource(select) {
-  selectSource.value = select;
-}
-function removeItem(table, id) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
-
-  if (idx !== -1) {
-    dataTable[table].splice(idx, 1);
-
-    dataTable[table].forEach((item, index) => {
-      item.accountNumber = index + 1;
-    });
-  }
-
-  calcTotalPrice();
+  selectedSource.value = select;
 }
 
-function updateInput(table, id, row, fieldName) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
-  const key = Object.keys(row).find((k) => row[k] === fieldName);
+async function distributeData() {
+  await store.getOrdersById(route.query.id);
 
-  dataTable[table][idx][key] = row[key];
-  calcTotalPrice();
-}
-
-async function getOrder() {
-  const response = await axios.get(
-    `http://localhost:8000/pre-orders/${route.query.id}`
-  );
-
-  order.value = response.data.order;
-  finalPrice.value = +order.value.totalPrice;
+  order.value = store.oneOrder;
+  finalPrice.value = order.value.pay;
+  prepayment.value = order.value.prepayment;
+  sale.value = order.value.sale;
+  totalPrice.value = +order.value.totalPrice;
+  isPublic.value = order.value.isPublic;
 
   const { address, comment, first_name, second_name, name, phone } =
     order.value;
-
   dataTable.customer = {
     address,
     comment,
@@ -212,81 +235,11 @@ async function getOrder() {
     name,
     phone,
   };
-  dataTable.rowsMaterials = order.value.PreOrderMaterials;
-  dataTable.rowsServices = order.value.PreOrderServices;
-  dataTable.rowsWorks = order.value.PreOrderWorks;
-}
-
-function validateOrderData() {
-  const isCustomerValid = validateCustomerData(dataTable.customer);
-
-  return isCustomerValid;
-}
-
-async function saveOrder() {
-  isProcessing.value = true;
-
-  if (!validateOrderData()) {
-    isProcessing.value = false;
-    return;
-  }
-
-  const order = {
-    id: crypto.randomUUID(),
-    ...dataTable.customer,
-    isDraft: true,
-    isPublick: false,
-    source: selectedSource.value,
-    totalPrice: totalPrice.value,
-    currentData: storePreOrder.getCurrentDate(),
-
-    dataTable: {
-      rowsMaterials: dataTable.rowsMaterials,
-      rowsServices: dataTable.rowsServices,
-      rowsWorks: dataTable.rowsWorks,
-    },
-  };
-
-  try {
-    isProcessing.value = true;
-    if (!isOrderCreated.value) {
-      console.log(order);
-      await storePreOrder.createPreOrder(
-        order,
-        dataTable.rowsMaterials,
-        dataTable.rowsServices,
-        dataTable.rowsWorks
-      );
-
-      router.push("/calculate");
-    } else {
-      isProcessing.value = true;
-
-      storePreOrder.updatePreOrder(
-        route.query.id,
-        order,
-        order.dataTable.rowsMaterials,
-        order.dataTable.rowsServices,
-        order.dataTable.rowsWorks
-      );
-    }
-
-    isOrderCreated.value = false;
-    isProcessing.value = false;
-
-    router.push("/calculate");
-  } catch (error) {
-    $q.notify({
-      message: `Помилка: ${error.response?.data?.message || error.message}`,
-      color: "negative",
-      icon: "error",
-      position: "top-right",
-      timeout: 3000,
-    });
-    console.error("Помилка при збереженні замовлення:", error);
-  } finally {
-    isProcessing.value = false;
-  }
+  dataTable.rowsDead = order.value.OrderDeads;
+  dataTable.rowsMaterials = order.value.OrderMaterials;
+  dataTable.rowsServices = order.value.OrderServices;
+  dataTable.rowsWorks = order.value.OrderWorks;
+  sortPhotos(order.value.OrderPhotoLinks);
 }
 </script>
 
@@ -295,10 +248,9 @@ async function saveOrder() {
     <template #separator>
       <q-icon name="chevron_right" color="grey" />
     </template>
-
-    <q-breadcrumbs-el to="/calculate" clickable> Просчеты </q-breadcrumbs-el>
-    <q-breadcrumbs-el to="/order-estimation" clickable>
-      Просчет {{ accountNumber }} ({{ dataTable.customer.name }})
+    <q-breadcrumbs-el to="/orders" clickable> Заказы </q-breadcrumbs-el>
+    <q-breadcrumbs-el to="/create" clickable>
+      Заказ {{ accountNumber }} ({{ dataTable.customer.name }})
     </q-breadcrumbs-el>
   </q-breadcrumbs>
 
@@ -307,14 +259,13 @@ async function saveOrder() {
 
     <div>
       <UiTextH2 class="table__title">Название продукта</UiTextH2>
-
       <q-input
         class="input"
         stack-label
         v-model="dataTable.customer.name"
         label="Название"
         lazy-rules
-        :rules="[(val) => (val && val.length > 0) || 'Please type something']"
+        :rules="[(val) => (val && val.length > 0) || 'Введите название']"
       ></q-input>
     </div>
 
@@ -325,8 +276,9 @@ async function saveOrder() {
         @click="changeTab(tab.name)"
         :selectedTab="currentTab"
         :name="tab.name"
-        >{{ tab.name }}</TheTabs
       >
+        {{ tab.name }}
+      </TheTabs>
     </div>
 
     <keep-alive>
@@ -338,12 +290,12 @@ async function saveOrder() {
         @updateInput="updateInput"
         @createCell="createCell"
         @remove="removeItem"
+        @updateParents="addPhoto"
       />
     </keep-alive>
 
     <div class="q-pa-md">
-      <UiTextH2 class="table__title customer">Заказчик</UiTextH2>
-
+      <UiTextH2 class="table__title">Заказчик</UiTextH2>
       <div class="wrapper">
         <div class="customer">
           <q-input
@@ -351,32 +303,26 @@ async function saveOrder() {
             v-model="dataTable.customer.first_name"
             label="Имя заказчика"
             lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
-            ]"
+            :rules="[(val) => (val && val.length > 0) || 'Введите имя']"
           ></q-input>
-
           <q-input
             stack-label
             v-model="dataTable.customer.second_name"
             label="Фамилия заказчика"
             lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
-            ]"
+            :rules="[(val) => (val && val.length > 0) || 'Введите фамилию']"
           ></q-input>
-
           <q-input
             stack-label
             v-model="dataTable.customer.comment"
             label="Примечание"
             lazy-rules
             :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
+              (val) => (val && val.length > 0) || 'Введите коментирие к заказу',
+              (val) => val.length >= 3 || 'Минимум 3 символа',
             ]"
           ></q-input>
         </div>
-
         <div class="customer">
           <q-input
             stack-label
@@ -385,26 +331,20 @@ async function saveOrder() {
             lazy-rules
             mask="+380(##)-###-##-##"
             :rules="[
-              (val) =>
-                (val !== null && val !== '') ||
-                'Будь ласка, введіть номер телефону',
+              (val) => (val !== null && val !== '') || 'Введите номер телефона',
               (val) =>
                 /^\+380\(\d{2}\)-\d{3}-\d{2}-\d{2}$/.test(val) ||
                 'Неправильний формат номеру телефону',
             ]"
             type="tel"
           ></q-input>
-
           <q-input
             stack-label
             v-model="dataTable.customer.address"
             label="Aдрес доставки"
             lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
-            ]"
+            :rules="[(val) => (val && val.length > 0) || 'Введите адрес']"
           ></q-input>
-
           <q-select
             v-model="selectedSource"
             :options="source"
@@ -416,6 +356,34 @@ async function saveOrder() {
     </div>
 
     <div class="total-summary">
+      <div class="total-summary__row">
+        <span>Общая сумма</span>
+        <span>{{ formatTotalPrice }} ₴</span>
+      </div>
+      <div class="total-summary__row">
+        <span>Скидка</span>
+        <div>
+          <input
+            placeholder="0"
+            class="input-price"
+            :value="formatSale"
+            @input="(event) => calcFinalPrice(event, 'sale')"
+          />
+          ₴
+        </div>
+      </div>
+      <div class="total-summary__row">
+        <span>Предоплата</span>
+        <div>
+          <input
+            placeholder="0"
+            class="input-price"
+            :value="formattedPrepayment"
+            @input="(event) => calcFinalPrice(event, 'prepayment')"
+          />
+          ₴
+        </div>
+      </div>
       <div class="total-summary__row total-summary__row--final">
         <span>Итоговая сумма</span>
         <span>{{ formatFinalPrice }} ₴</span>
@@ -431,130 +399,114 @@ async function saveOrder() {
         class="q-mr-sm"
         @click="saveOrder"
       />
+      <q-btn
+        @click="generatePDF"
+        label="Сгенерировать PDF"
+        icon="picture_as_pdf"
+        color="red"
+        class="q-mr-sm"
+      />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .table__wrapper {
+  gap: 30px;
+  display: flex;
   padding-top: 20px;
-
+  flex-direction: column;
   h1 {
-    text-align: center;
     font-size: 34px;
     font-weight: 600;
+    text-align: center;
   }
-
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
 }
-
 .form {
   display: flex;
   flex-direction: column;
 }
-
 .wrapper {
-  display: flex;
   gap: 50px;
-
+  display: flex;
   .customer {
-    display: flex;
-    flex-direction: column;
     gap: 15px;
     width: 100%;
-
-    h2 {
-      font-weight: 500;
-    }
-  }
-
-  .info-by-order {
     display: flex;
     flex-direction: column;
+    h2 {
+      font-weight: 500;
+    }
+  }
+  .info-by-order {
     gap: 30px;
     width: 100%;
-
+    display: flex;
+    flex-direction: column;
     h2 {
       font-weight: 500;
     }
   }
 }
-
 .table__title {
-  text-align: center;
+  font-size: 30px;
   font-weight: 500;
-  font-size: 25px;
-  margin-bottom: 50px;
+  text-align: center;
+  margin-top: 50px;
+  margin-bottom: 100px;
 }
-
-.customer {
-  text-align: justify;
-  font-weight: 600;
-}
-
 .button {
   margin-bottom: 15px;
 }
-
 .input {
   width: 300px;
   margin: 0 auto;
 }
-
 .q-td {
   height: 50px;
-  position: relative;
   overflow-y: auto;
-}
-
-.tabs {
   position: relative;
-  padding: 64px 0 34px 0;
+}
+.tabs {
   display: flex;
+  position: relative;
   align-items: center;
+  padding: 64px 0 34px 0;
   justify-content: space-around;
   border-bottom: 1px solid rgba(216, 216, 216, 1);
 }
-
 .total-summary {
-  padding: 0 50px;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
+  display: flex;
   font-size: 18px;
-
+  padding: 0 50px;
+  flex-direction: column;
   &__row {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e0e0e0;
     padding: 5px 0;
-
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e0e0e0;
     &:last-child {
       border-bottom: none;
     }
-
     &--final {
-      font-weight: bold;
       font-size: 20px;
       margin-top: 10px;
+      font-weight: bold;
     }
   }
-
   .input-price {
-    width: 100px;
-    text-align: right;
-    font-size: 18px;
     padding: 5px;
+    width: 100px;
+    font-size: 18px;
+    text-align: right;
   }
 }
-
 .button-group {
   display: flex;
+  padding-top: 50px;
   justify-content: end;
   border-top: 2px grey solid;
-  padding-top: 50px;
 }
 </style>

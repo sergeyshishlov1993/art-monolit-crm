@@ -37,7 +37,24 @@
               map-options
               option-value="id"
               option-label="name"
-              @update:model-value="handleRoleChange(props.row.id)"
+              @update:model-value="handleRoleChange(props.row.id, props.row)"
+            />
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-address="props">
+          <q-td :props="props">
+            <q-select
+              v-model="selectedStores[props.row.id]"
+              :options="storeOwner.storeOptions"
+              outlined
+              dense
+              emit-value
+              map-options
+              option-value="id"
+              option-label="name"
+              class="q-mt-sm"
+              @update:model-value="handleStoreChange(props.row.id, props.row)"
             />
           </q-td>
         </template>
@@ -57,6 +74,9 @@
               type="string"
               dense
               borderless
+              :readonly="
+                props.col.name === 'name' && props.row.name === 'Владелец'
+              "
               @focus="touchInput(props.row)"
             ></q-input>
           </q-td>
@@ -105,6 +125,7 @@
                 icon="delete"
                 round
                 dense
+                v-if="props.row.name !== 'Владелец'"
                 @click="storeOwner.handleDeleteUser(props.row)"
               >
                 <q-tooltip>Удалить</q-tooltip>
@@ -129,6 +150,19 @@ const pagination = ref({
 });
 
 const selectedRoles = reactive({});
+const selectedStores = reactive({});
+
+const handleStoreChange = (userId, row) => {
+  const storeId = selectedStores[userId];
+  const store = storeOwner.storeOptions.find((s) => s.id === storeId);
+
+  const user = storeOwner.rowsUser.find((u) => u.id === userId);
+
+  touchInput(row);
+  if (user) {
+    user.address = store ? store.name : "";
+  }
+};
 
 const initializeRoles = () => {
   storeOwner.rowsUser.forEach((user) => {
@@ -136,14 +170,23 @@ const initializeRoles = () => {
   });
 };
 
-const handleRoleChange = (userId) => {
+const initializeStores = () => {
+  storeOwner.rowsUser.forEach((user) => {
+    const store = storeOwner.storeOptions.find((s) => s.name === user.address);
+    selectedStores[user.id] = store ? store.id : null;
+  });
+};
+
+const handleRoleChange = (userId, row) => {
   const newRoleId = selectedRoles[userId];
   console.log(`Роль користувача ${userId} змінено на: ${newRoleId}`);
+  touchInput(row);
 };
 
 onMounted(() => {
   storeOwner.getAllUsers().then(() => {
     initializeRoles();
+    initializeStores();
   });
 
   storeOwner.getAllRows();
@@ -152,12 +195,6 @@ onMounted(() => {
 const touchInput = (row) => {
   row.isChanged = true;
 };
-
-function addNewUser() {
-  storeOwner.addRowRole();
-  pagination.value.sortBy = null;
-  pagination.value.descending = false;
-}
 </script>
 
 <style lang="scss" scoped>

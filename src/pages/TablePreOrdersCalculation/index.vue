@@ -207,10 +207,8 @@ import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { usePreOrders } from "@/stores/PreOrders";
 import { useOrders } from "@/stores/Orders";
-import axios from "axios";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 
-const $q = useQuasar();
 const formattedDateRange = ref("01.01.2024 - 01.02.2024");
 const router = useRouter();
 const isCreated = ref(false);
@@ -288,34 +286,7 @@ async function handlerSearch() {
 }
 async function removeItem(id) {
   isProcessing.value = true;
-  const idx = store.rows.findIndex((el) => el.id == id);
-
-  try {
-    const response = await axios.delete(
-      `http://localhost:8000/pre-orders/remove-order/${id}`
-    );
-
-    store.rows.splice(idx, 1);
-
-    $q.notify({
-      message: "Удалено!",
-      color: "positive",
-      icon: "check_circle",
-      position: "top-right",
-      timeout: 2500,
-    });
-  } catch (error) {
-    console.error(error);
-
-    $q.notify({
-      message: `Ощибка: ${error.response?.data?.message || error.message}`,
-      color: "negative",
-      icon: "error",
-      timeout: 3000,
-    });
-  } finally {
-    isProcessing.value = false;
-  }
+  await store.deletePreOrder(id);
 }
 async function resetFilters() {
   selectedDateRange.value = { from: "2024-01-01", to: "2024-02-01" };

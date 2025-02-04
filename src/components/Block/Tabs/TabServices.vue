@@ -85,6 +85,18 @@ function addSelectedValue(val) {
 
   calcTotalPrice();
 }
+function allowOnlyNumbers(event) {
+  const charCode = event.which ? event.which : event.keyCode;
+
+  if (
+    charCode !== 8 &&
+    charCode !== 9 &&
+    charCode !== 13 &&
+    (charCode < 48 || charCode > 57)
+  ) {
+    event.preventDefault();
+  }
+}
 function createCell(val, state, id) {
   const idx = data.findIndex((el) => el.id === id);
   data[idx] = val;
@@ -169,6 +181,7 @@ onMounted(() => {
             @update:modelValue="
               emitValue(props.row, props.col.name, props.row.id)
             "
+            @keypress="allowOnlyNumbers"
           ></q-input>
         </q-td>
       </template>

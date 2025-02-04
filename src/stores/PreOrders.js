@@ -123,6 +123,53 @@ export const usePreOrders = defineStore("preOrders", () => {
     movedPreOrders.value = preOrder;
   }
 
+  async function createPreOrder(order, materials, services, works) {
+    const response = await axios.post(
+      "http://localhost:8000/pre-orders/create-preorder",
+      {
+        preOrderData: order,
+        preOrderMaterials: materials,
+        preOrderServices: services,
+        preOrderWorks: works,
+      }
+    );
+
+    $q.notify({
+      message: `Просчет ${order.name} добавлен`,
+      color: "positive",
+      icon: "check_circle",
+      position: "top-right",
+      timeout: 2500,
+    });
+    try {
+    } catch (error) {}
+  }
+  async function deletePreOrder(id) {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8000/pre-orders/remove-order/${id}`
+      );
+
+      rows.value = rows.value.filter((el) => el.id !== id);
+
+      $q.notify({
+        message: "Удалено!",
+        color: "positive",
+        icon: "check_circle",
+        position: "top-right",
+        timeout: 2500,
+      });
+    } catch (error) {
+      console.error(error);
+
+      $q.notify({
+        message: `Ощибка: ${error.response?.data?.message || error.message}`,
+        color: "negative",
+        icon: "error",
+        timeout: 3000,
+      });
+    }
+  }
   async function getPreOrders(status, startDate, endDate, search) {
     try {
       const params = {
@@ -157,11 +204,33 @@ export const usePreOrders = defineStore("preOrders", () => {
     } finally {
     }
   }
+  async function updatePreOrder(id, order, materials, services, works) {
+    const response = await axios.put(
+      `http://localhost:8000/pre-orders/update-preorder/${id}`,
+      {
+        preOrderData: order,
+        preOrderMaterials: materials,
+        preOrderServices: services,
+        preOrderWorks: works,
+      }
+    );
+
+    $q.notify({
+      message: "Замовлення оновлено успішно!",
+      color: "positive",
+      icon: "check_circle",
+      position: "top-right",
+      timeout: 2500,
+    });
+  }
 
   return {
-    columns,
-    rows,
     addRow,
+    columns,
+    createPreOrder,
+    deletePreOrder,
+    updatePreOrder,
+    rows,
     getPreOrders,
     getCurrentDate,
     movedPreOrders,

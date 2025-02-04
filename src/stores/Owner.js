@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 
@@ -167,8 +167,46 @@ export const useOwner = defineStore("owner", () => {
       style: "width: 50px",
     },
   ]);
+  const columnStores = ref([
+    {
+      name: "accountNumber",
+      required: true,
+      label: "Номер",
+      align: "left",
+      field: "accountNumber",
+      sortable: true,
+      style: "width: 50px",
+    },
+    {
+      name: "name",
+      align: "left",
+      label: "Адрес магазина",
+      field: "name",
+      sortable: true,
+      style: "width: 50px",
+    },
+
+    {
+      name: "createdAt",
+      label: "Дата",
+      align: "left",
+      field: "createdAt",
+      sortable: true,
+      format: (val) => formatDate(val),
+      style: "width: 100px",
+    },
+
+    {
+      name: "delete",
+      label: "Действия",
+      align: "left",
+      field: "delete",
+      style: "width: 50px",
+    },
+  ]);
   const rowsUser = ref([]);
   const rowsRole = ref([]);
+  const rowsStores = ref([]);
   const formattedRoles = rowsRole.value.map((role) => {
     const permissions = role.permissions.reduce((acc, perm) => {
       acc[perm.key] = true;
@@ -182,6 +220,14 @@ export const useOwner = defineStore("owner", () => {
     };
   });
   const optionsRole = ref([]);
+
+  const storeOptions = computed(() => [
+    { id: null, name: "Все магазины" },
+    ...rowsStores.value.map((store) => ({
+      id: store.id,
+      name: store.name,
+    })),
+  ]);
 
   function addRowRole() {
     rowsRole.value.push({
@@ -207,6 +253,16 @@ export const useOwner = defineStore("owner", () => {
       password: "",
       address: "",
       role: "",
+      createdAt: new Date(),
+      isCreated: true,
+      isChanged: false,
+    });
+  }
+  function addRowStores() {
+    rowsStores.value.push({
+      id: crypto.randomUUID(),
+      accountNumber: rowsStores.value.length + 1,
+      name: "",
       createdAt: new Date(),
       isCreated: true,
       isChanged: false,
@@ -295,6 +351,40 @@ export const useOwner = defineStore("owner", () => {
       });
     }
   }
+  async function createStore(row) {
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/owner/create-store",
+        {
+          name: row.name,
+        }
+      );
+
+      $q.notify({
+        message: "Магазин добавлен!",
+        color: "positive",
+        icon: "check_circle",
+        position: "top-right",
+        timeout: 2500,
+      });
+
+      const idx = rowsStores.value.findIndex((el) => el.id === row.id);
+      rowsStores.value[idx].isCreated = false;
+      rowsStores.value[idx].isChanged = false;
+
+      return response.data;
+    } catch (err) {
+      console.error("Error creating role:", err);
+      error.value = err.response?.data?.error || "Unknown error occurred";
+
+      $q.notify({
+        message: `Ошибка: ${error.response?.data?.message || error.message}`,
+        color: "negative",
+        icon: "error",
+        timeout: 3000,
+      });
+    }
+  }
   async function getAllUsers() {
     try {
       const response = await axios.get("http://localhost:8000/owner/users");
@@ -363,6 +453,34 @@ export const useOwner = defineStore("owner", () => {
       });
     }
   }
+
+  async function getAllStores() {
+    try {
+      const response = await axios.get("http://localhost:8000/owner/stores");
+
+      rowsStores.value = response.data.stores;
+
+      console.log(rowsStores.value);
+
+      $q.notify({
+        message: "Список магазинов получины!",
+        color: "positive",
+        icon: "check_circle",
+        position: "top-right",
+        timeout: 2500,
+      });
+    } catch (error) {
+      console.error("error", error);
+
+      $q.notify({
+        message: `Ошибка: ${error.response?.data?.message || error.message}`,
+        color: "negative",
+        icon: "error",
+        timeout: 3000,
+      });
+    }
+  }
+
   async function handleCheckboxChange(permissionKey, row) {
     try {
       const value = row[permissionKey];
@@ -447,6 +565,35 @@ export const useOwner = defineStore("owner", () => {
       rowsUser.value = rowsUser.value.filter((r) => r !== row);
     }
   }
+
+  async function handleDeleteStores(row) {
+    if (row.id && !row.isCreated) {
+      try {
+        await axios.delete(
+          `http://localhost:8000/owner/delete-store/${row.id}`
+        );
+        rowsStores.value = rowsStores.value.filter((r) => r.id !== row.id);
+        $q.notify({
+          message: "Удалено !",
+          color: "positive",
+          icon: "check_circle",
+          position: "top-right",
+          timeout: 2500,
+        });
+      } catch (error) {
+        console.error("Error deleting role:", error);
+
+        $q.notify({
+          message: `Ошибка: ${error.response?.data?.message || error.message}`,
+          color: "negative",
+          icon: "error",
+          timeout: 3000,
+        });
+      }
+    } else {
+      rowsStores.value = rowsStores.value.filter((r) => r !== row);
+    }
+  }
   async function updateUser(row) {
     try {
       const response = await axios.put(
@@ -481,23 +628,62 @@ export const useOwner = defineStore("owner", () => {
     }
   }
 
+  async function updateStore(row) {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/owner/update-store/${row.id}`,
+        {
+          name: row.name,
+        }
+      );
+
+      $q.notify({
+        message: "Адрес магазина обновлен !",
+        color: "positive",
+        icon: "check_circle",
+        position: "top-right",
+        timeout: 2500,
+      });
+
+      return response.data;
+    } catch (err) {
+      console.error("Error creating role:", err);
+      error.value = err.response?.data?.error || "Unknown error occurred";
+
+      $q.notify({
+        message: `Ошибка: ${error.response?.data?.message || error.message}`,
+        color: "negative",
+        icon: "error",
+        timeout: 3000,
+      });
+    }
+  }
+
   return {
     addRowUser,
     addRowRole,
+    addRowStores,
     columnsUser,
     columnRols,
+    columnStores,
     createRoleWithPermissions,
     createUserAssignRole,
+    createStore,
     formatDate,
     formattedRoles,
     getAllUsers,
     getAllRows,
+    getAllStores,
     handleCheckboxChange,
     handleDeleteRole,
+    handleDeleteStores,
     handleDeleteUser,
     optionsRole,
     rowsUser,
     rowsRole,
+    rowsStores,
     updateUser,
+    updateStore,
+    storeOptions,
   };
 });

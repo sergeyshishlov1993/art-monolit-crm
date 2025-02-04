@@ -112,7 +112,21 @@ async function handleUpdate(row) {
     console.error("Ошибка при обновлении количества:", error);
   }
 }
+function allowOnlyNumbers(event, n) {
+  if (n === "name") {
+    return;
+  }
+  const charCode = event.which ? event.which : event.keyCode;
 
+  if (
+    charCode !== 8 &&
+    charCode !== 9 &&
+    charCode !== 13 &&
+    (charCode < 48 || charCode > 57)
+  ) {
+    event.preventDefault();
+  }
+}
 function handlerFocusInput(row) {
   row.isChanged = true;
 
@@ -178,6 +192,7 @@ async function clearTableMaterials() {
               type="string"
               dense
               borderless
+              @keypress="allowOnlyNumbers($event, props.col.name)"
               @focus="handlerFocusInput(props.row)"
             ></q-input>
           </q-td>
@@ -193,6 +208,7 @@ async function clearTableMaterials() {
           <q-td :props="props" class="text-center">
             <div class="actions-btn">
               <q-btn
+                :disable="!props.row.isChanged"
                 round
                 color="primary"
                 icon="edit"
@@ -233,6 +249,7 @@ async function clearTableMaterials() {
       />
 
       <q-btn
+        :disable="!storeMaterials.rows.length"
         label="Сохранить"
         icon="save"
         color="primary"

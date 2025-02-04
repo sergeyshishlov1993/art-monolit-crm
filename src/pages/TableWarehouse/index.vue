@@ -2,9 +2,12 @@
 import { ref, onMounted, watch } from "vue";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 import { useWarehouse } from "@/stores/Warehouse";
+import { usePermissionStore } from "@/stores/PermissionStore";
+
 import debounce from "lodash/debounce";
 
 const storeWarehouse = useWarehouse();
+const permissionStore = usePermissionStore();
 const searchQuery = ref("");
 const pagination = ref({
   sortBy: "name",
@@ -15,6 +18,12 @@ const debouncedSearch = debounce(fetchSearchResults, 500);
 
 onMounted(async () => {
   await storeWarehouse.getWarehouseData();
+
+  if (!permissionStore.isOwner) {
+    storeWarehouse.columns = storeWarehouse.columns.filter(
+      (el) => el.name !== "earnings"
+    );
+  }
 });
 
 watch(searchQuery, (newValue) => {
@@ -25,6 +34,21 @@ async function fetchSearchResults(query) {
   await storeWarehouse.getWarehouseData(query);
 }
 
+function allowOnlyNumbers(event, n) {
+  if (n === "name") {
+    return;
+  }
+  const charCode = event.which ? event.which : event.keyCode;
+
+  if (
+    charCode !== 8 &&
+    charCode !== 9 &&
+    charCode !== 13 &&
+    (charCode < 48 || charCode > 57)
+  ) {
+    event.preventDefault();
+  }
+}
 function handlerFocusInput(row) {
   row.isChanged = true;
 }
@@ -88,6 +112,7 @@ function handlerFocusInput(row) {
               dense
               borderless
               @focus="handlerFocusInput(props.row)"
+              @keypress="allowOnlyNumbers($event, props.col.name)"
             ></q-input>
           </q-td>
         </template>
@@ -110,6 +135,7 @@ function handlerFocusInput(row) {
               </q-btn>
 
               <q-btn
+                :disable="!props.row.isChanged"
                 round
                 color="primary"
                 icon="edit"

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { usePermissionStore } from "@/stores/PermissionStore";
+import { useUserStore } from "@/stores/User";
 
 export async function login(name, password) {
   try {
@@ -14,6 +15,13 @@ export async function login(name, password) {
     localStorage.setItem("refreshToken", refreshToken);
     localStorage.setItem("permissions", JSON.stringify(permissions));
     localStorage.setItem("isOwner", user.isOwner);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    const userStore = useUserStore();
+    userStore.user = user;
+
+    console.log("user", user);
+    console.log("userStore", userStore.user);
 
     const permissionStore = usePermissionStore();
     permissionStore.setPermissions(permissions);
@@ -26,7 +34,6 @@ export async function login(name, password) {
   }
 }
 
-// Функція для отримання токену
 export function getAccessToken() {
   return localStorage.getItem("accessToken");
 }
@@ -35,7 +42,6 @@ export function getRefreshToken() {
   return localStorage.getItem("refreshToken");
 }
 
-// Функція для виходу
 export async function logout() {
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
@@ -49,12 +55,12 @@ export async function logout() {
     localStorage.removeItem("refreshToken", refreshToken);
     localStorage.removeItem("permissions");
     localStorage.removeItem("isOwner");
+    localStorage.removeItem("user", user);
   } catch (error) {
     console.error("ERROR LOGOUT", error);
   }
 }
 
-// Функція для оновлення токену
 export async function refreshToken() {
   try {
     const refreshToken = localStorage.getItem("refreshToken");
@@ -63,7 +69,6 @@ export async function refreshToken() {
     const response = await axios.post("/api/refresh", { refreshToken });
     const { accessToken } = response.data;
 
-    // Оновлюємо токен у LocalStorage
     localStorage.setItem("accessToken", accessToken);
 
     return accessToken;

@@ -34,6 +34,21 @@ async function handleUpdate(row) {
   }
 }
 
+function allowOnlyNumbers(event, n) {
+  if (n === "name") {
+    return;
+  }
+  const charCode = event.which ? event.which : event.keyCode;
+
+  if (
+    charCode !== 8 &&
+    charCode !== 9 &&
+    charCode !== 13 &&
+    (charCode < 48 || charCode > 57)
+  ) {
+    event.preventDefault();
+  }
+}
 function handlerFocusInput(row) {
   row.isChanged = true;
 
@@ -100,6 +115,7 @@ function handlerFocusInput(row) {
               type="string"
               dense
               borderless
+              @keypress="allowOnlyNumbers($event, props.col.name)"
               @focus="handlerFocusInput(props.row)"
             ></q-input>
           </q-td>
@@ -123,6 +139,7 @@ function handlerFocusInput(row) {
               </q-btn>
 
               <q-btn
+                :disable="!props.row.isChanged"
                 round
                 color="primary"
                 icon="edit"
@@ -150,6 +167,7 @@ function handlerFocusInput(row) {
 
     <div class="button-group">
       <q-btn
+        :disable="!storeArrival.rows.length"
         label="Внести приход"
         icon="add_circle"
         color="green"

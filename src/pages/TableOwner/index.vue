@@ -25,6 +25,7 @@ import { useOwner } from "@/stores/Owner";
 import TheTabs from "@/components/Block/TheTabs.vue";
 import TabRolePermission from "./components/Tabs/TabRolePermission.vue";
 import TabUsers from "./components/Tabs/TabUsers.vue";
+import TabStores from "./components/Tabs/TabStores.vue";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 
 const storeOwner = useOwner();
@@ -36,14 +37,22 @@ const activeTabComponent = computed(() => {
 
     case "Роли и разрешения":
       return TabRolePermission;
+
+    case "Магазины":
+      return TabStores;
   }
 });
-const currentTab = ref("Пользователи");
-const tabs = [{ name: "Пользователи" }, { name: "Роли и разрешения" }];
+const currentTab = ref("Роли и разрешения");
+const tabs = [
+  { name: "Роли и разрешения" },
+  { name: "Магазины" },
+  { name: "Пользователи" },
+];
 
 onMounted(async () => {
   await storeOwner.getAllUsers();
   await storeOwner.getAllRows();
+  await storeOwner.getAllStores();
 });
 
 function changeTab(name) {

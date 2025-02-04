@@ -29,7 +29,7 @@ const router = createRouter({
         {
           path: "/create",
           name: "orders-create",
-          component: () => import("../pages/TableCreateOrder/index.vue"),
+          component: () => import("../pages/TableCreateOrderTest/index.vue"),
           meta: { requiresPermission: "can_write_order" },
         },
 

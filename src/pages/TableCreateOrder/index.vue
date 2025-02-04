@@ -1,10 +1,11 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useOrders } from "@/stores/Orders";
 import { usePreOrders } from "@/stores/PreOrders";
-import axios from "axios";
+import { useValidation } from "@/composables/useValidation";
+import { useUserStore } from "@/stores/User";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 
@@ -12,6 +13,7 @@ import TabDead from "@/components/Block/Tabs/TabDead.vue";
 import TabMaterials from "@/components/Block/Tabs/TabMaterials.vue";
 import TabTypeWork from "@/components/Block/Tabs/TabTypeWork.vue";
 import TabServices from "@/components/Block/Tabs/TabServices.vue";
+import TabPhotos from "@/components/Block/Tabs/TabPhotos/index.vue";
 import TheTabs from "@/components/Block/TheTabs.vue";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 import UiTextH2 from "@/components/Ui/UiTextH2.vue";
@@ -19,76 +21,85 @@ import UiTextH2 from "@/components/Ui/UiTextH2.vue";
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
+const store = useOrders();
+const storePreOrder = usePreOrders();
+const userStore = useUserStore();
+const { validateCustomerData, validationTable } = useValidation($q);
 
 const accountNumber = ref(route.query.accountNumber);
 const currentTab = ref("Умерший");
-const dataTable = reactive({
-  customer: {
-    name: "",
-    first_name: "",
-    second_name: "",
-    phone: "",
-    address: "",
-    comment: "",
-    status: "new",
-  },
 
-  rowsDead: [
-    {
-      id: crypto.randomUUID(),
-      accountNumber: 1,
-      deadName: "",
-      deadSecondName: "",
-      deadSurName: "",
-      deadDateBirth: "",
-      deadDateDeath: "",
+const dataTable = reactive(
+  store.getSavedDraft() || {
+    customer: {
+      name: "",
+      first_name: "",
+      second_name: "",
+      phone: "",
+      address: "",
+      comment: "",
+      status: "new",
     },
-  ],
 
-  rowsMaterials: [
-    {
-      id: crypto.randomUUID(),
-      accountNumber: 1,
-      name: "Выбрать",
-      quantity: 1,
-      price: 0,
-    },
-  ],
+    rowsDead: [
+      {
+        id: crypto.randomUUID(),
+        accountNumber: 1,
+        deadName: "",
+        deadSecondName: "",
+        deadSurName: "",
+        deadDateBirth: "",
+        deadDateDeath: "",
+      },
+    ],
 
-  rowsServices: [
-    {
-      id: crypto.randomUUID(),
-      accountNumber: 1,
-      name: "Выбрать",
-      price: 0,
-    },
-  ],
+    rowsMaterials: [
+      {
+        id: crypto.randomUUID(),
+        accountNumber: 1,
+        name: "Выбрать",
+        quantity: 1,
+        price: 0,
+      },
+    ],
 
-  rowsWorks: [
-    {
-      id: crypto.randomUUID(),
-      accountNumber: 1,
-      name: "Выбрать",
-      price: 0,
-    },
-  ],
-});
+    rowsServices: [
+      {
+        id: crypto.randomUUID(),
+        accountNumber: 1,
+        name: "Выбрать",
+        price: 0,
+      },
+    ],
+
+    rowsWorks: [
+      {
+        id: crypto.randomUUID(),
+        accountNumber: 1,
+        name: "Выбрать",
+        price: 0,
+      },
+    ],
+    rowsPhotos: { carvings: [], artistic: [] },
+  }
+);
 const finalPrice = ref(0);
 const isProcessing = ref(false);
 const isOrderCreated = ref(route.query.isCreated === "false");
 const isMoved = ref(route.query.isMoved === "true");
+const isPublic = ref(false);
 const order = ref({});
 const prepayment = ref(0);
 const sale = ref(0);
 const selectedSource = ref("Магазин");
 const source = ["Google", "Facebook", "Instagram", "Рекомендация", "Магазин"];
-const store = useOrders();
-const storePreOrder = usePreOrders();
+
 const tabs = [
   { name: "Умерший" },
   { name: "Материалы" },
   { name: "Виды работ" },
   { name: "Услуги" },
+  { name: "Фото" },
 ];
 const totalPrice = ref(0);
 
@@ -129,6 +140,9 @@ const activeTabComponent = computed(() => {
 
     case "Услуги":
       return TabServices;
+
+    case "Фото":
+      return TabPhotos;
   }
 });
 const activeTabProps = computed(() => {
@@ -142,6 +156,8 @@ const activeTabProps = computed(() => {
       return { rows: dataTable.rowsWorks };
     case "Услуги":
       return { rows: dataTable.rowsServices };
+    case "Фото":
+      return { rows: dataTable.rowsPhotos };
     default:
       return {};
   }
@@ -160,8 +176,32 @@ const formatTotalPrice = computed(() => {
 });
 
 onMounted(async () => {
+  userStore.loadUserFromStorage();
+
+  const savedData = store.getSavedDraft();
+
+  if (savedData) {
+    Object.assign(dataTable, savedData);
+
+    totalPrice.value = savedData.totalPrice;
+    prepayment.value = savedData.prepayment;
+    finalPrice.value = savedData.finalPrice;
+    sale.value = savedData.sale;
+    $q.notify({
+      message: "Черновик заказа восстановлен",
+      color: "positive",
+      icon: "restore",
+      position: "top-right",
+      timeout: 2000,
+    });
+
+    return;
+  }
+
   if (isOrderCreated.value) {
-    await getOrder();
+    // await getOrder();
+
+    await distributeData();
   }
 
   if (isMoved.value) {
@@ -183,6 +223,9 @@ function addItem(tableName, item) {
       })
     );
   }
+}
+function addPhoto(data, type) {
+  dataTable.rowsPhotos[type] = data;
 }
 function addMovedOrder() {
   const { address, comment, first_name, second_name, name, phone } =
@@ -516,20 +559,34 @@ function updateInput(table, id, row, fieldName) {
   const idx = dataTable[table].findIndex((el) => el.id === id);
   const key = Object.keys(row).find((k) => row[k] === fieldName);
 
-  dataTable[table][idx][key] = row[key];
+  if (table === "rowsWorks") {
+    dataTable[table][idx][key] = row[key];
+  } else {
+    dataTable[table][idx][fieldName] = row[fieldName];
+  }
+
   calcTotalPrice();
 }
+function sortPhotos(orderPhotoLinks) {
+  const sorted = orderPhotoLinks.map((photo) => {
+    dataTable.rowsPhotos[photo.type].push(photo);
+  });
 
-async function getOrder() {
-  const response = await axios.get(
-    `http://localhost:8000/orders/${route.query.id}`
-  );
+  return {
+    carvings: sorted.carvings || [],
+    artistic: sorted.artistic || [],
+  };
+}
 
-  order.value = response.data.order;
+async function distributeData() {
+  await store.getOrdersById(route.query.id);
+
+  order.value = store.oneOrder;
   finalPrice.value = order.value.pay;
   prepayment.value = order.value.prepayment;
   sale.value = order.value.sale;
   totalPrice.value = +order.value.totalPrice;
+  isPublic.value = order.value.isPublic;
 
   const { address, comment, first_name, second_name, name, phone } =
     order.value;
@@ -546,9 +603,51 @@ async function getOrder() {
   dataTable.rowsMaterials = order.value.OrderMaterials;
   dataTable.rowsServices = order.value.OrderServices;
   dataTable.rowsWorks = order.value.OrderWorks;
+  sortPhotos(order.value.OrderPhotoLinks);
 }
+
+function validateOrderData() {
+  const isCustomerValid = validateCustomerData(dataTable.customer);
+
+  const isTablesValid = [validationTable(dataTable.rowsDead, "Умерший")].every(
+    (isValid) => isValid
+  );
+
+  return isCustomerValid && isTablesValid;
+}
+
+const saveDraftToLocalStorage = () => {
+  localStorage.setItem(
+    "orderDraft",
+    JSON.stringify({
+      ...dataTable,
+      createdAt: new Date().toISOString().replace("T", " ").slice(0, 19),
+      isDraft: true,
+      isPublic: isPublic.value,
+      totalPrice: totalPrice.value,
+      finalPrice: finalPrice.value,
+      sale: sale.value,
+      status: "new",
+      prepayment: prepayment.value,
+    })
+  );
+};
+
+watch(
+  [dataTable, prepayment, sale, totalPrice, finalPrice],
+  () => {
+    saveDraftToLocalStorage();
+  },
+  { deep: true }
+);
+
 async function saveOrder() {
   isProcessing.value = true;
+
+  // if (!validateOrderData()) {
+  //   isProcessing.value = false;
+  //   return;
+  // }
 
   const order = {
     id: crypto.randomUUID(),
@@ -557,7 +656,10 @@ async function saveOrder() {
     prepayment: prepayment.value,
     pay: finalPrice.value,
     sale: sale.value,
+    status: "new",
     totalPrice: totalPrice.value,
+    storeAddress: userStore.user.address,
+    isPublic: true,
     currentData: store.getCurrentDate(),
 
     dataTable: {
@@ -565,20 +667,22 @@ async function saveOrder() {
       rowsMaterials: dataTable.rowsMaterials,
       rowsServices: dataTable.rowsServices,
       rowsWorks: dataTable.rowsWorks,
+      rowsPhotos: dataTable.rowsPhotos,
     },
   };
 
   try {
-    isProcessing.value = true;
-
     if (!isOrderCreated.value) {
       await store.createOrder(
         order,
         order.dataTable.rowsDead,
         order.dataTable.rowsMaterials,
         order.dataTable.rowsServices,
-        order.dataTable.rowsWorks
+        order.dataTable.rowsWorks,
+        order.dataTable.rowsPhotos
       );
+
+      store.clearDraft();
 
       if (isMoved.value) {
         await store.movePreOrderToOrder(route.query.preOrderId);
@@ -586,15 +690,14 @@ async function saveOrder() {
 
       router.push("/orders");
     } else {
-      isProcessing.value = true;
-
       await store.updateOrder(
         route.query.id,
         order,
         order.dataTable.rowsDead,
         order.dataTable.rowsMaterials,
         order.dataTable.rowsServices,
-        order.dataTable.rowsWorks
+        order.dataTable.rowsWorks,
+        order.dataTable.rowsPhotos
       );
     }
 
@@ -618,6 +721,17 @@ async function saveOrder() {
 </script>
 
 <template>
+  <q-breadcrumbs class="text-grey-8 breadcrumbs" align="left">
+    <template #separator>
+      <q-icon name="chevron_right" color="grey" />
+    </template>
+
+    <q-breadcrumbs-el to="/orders" clickable> Заказы </q-breadcrumbs-el>
+    <q-breadcrumbs-el to="/create" clickable>
+      Заказ {{ accountNumber }} ({{ dataTable.customer.name }})
+    </q-breadcrumbs-el>
+  </q-breadcrumbs>
+
   <div class="table__wrapper">
     <UiTextH1>Заказ №{{ accountNumber }}</UiTextH1>
 
@@ -630,7 +744,7 @@ async function saveOrder() {
         v-model="dataTable.customer.name"
         label="Название"
         lazy-rules
-        :rules="[(val) => (val && val.length > 0) || 'Please type something']"
+        :rules="[(val) => (val && val.length > 0) || 'Введите название']"
       ></q-input>
     </div>
 
@@ -654,6 +768,7 @@ async function saveOrder() {
         @updateInput="updateInput"
         @createCell="createCell"
         @remove="removeItem"
+        @updateParents="addPhoto"
       />
     </keep-alive>
 
@@ -667,9 +782,7 @@ async function saveOrder() {
             v-model="dataTable.customer.first_name"
             label="Имя заказчика"
             lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
-            ]"
+            :rules="[(val) => (val && val.length > 0) || 'Введите имя']"
           ></q-input>
 
           <q-input
@@ -677,9 +790,7 @@ async function saveOrder() {
             v-model="dataTable.customer.second_name"
             label="Фамилия заказчика"
             lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
-            ]"
+            :rules="[(val) => (val && val.length > 0) || 'Введите фамилию']"
           ></q-input>
 
           <q-input
@@ -688,7 +799,8 @@ async function saveOrder() {
             label="Примечание"
             lazy-rules
             :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
+              (val) => (val && val.length > 0) || 'Введите коментирие к заказу',
+              (val) => val.length >= 3 || 'Минимум 3 символа',
             ]"
           ></q-input>
         </div>
@@ -701,9 +813,7 @@ async function saveOrder() {
             lazy-rules
             mask="+380(##)-###-##-##"
             :rules="[
-              (val) =>
-                (val !== null && val !== '') ||
-                'Будь ласка, введіть номер телефону',
+              (val) => (val !== null && val !== '') || 'Введите номер телефона',
               (val) =>
                 /^\+380\(\d{2}\)-\d{3}-\d{2}-\d{2}$/.test(val) ||
                 'Неправильний формат номеру телефону',
@@ -716,9 +826,7 @@ async function saveOrder() {
             v-model="dataTable.customer.address"
             label="Aдрес доставки"
             lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || 'Please type something',
-            ]"
+            :rules="[(val) => (val && val.length > 0) || 'Введите адрес']"
           ></q-input>
 
           <q-select
@@ -834,10 +942,11 @@ async function saveOrder() {
 }
 
 .table__title {
-  font-size: 25px;
+  font-size: 30px;
   font-weight: 500;
   text-align: center;
-  margin-bottom: 50px;
+  margin-top: 50px;
+  margin-bottom: 100px;
 }
 
 .button {

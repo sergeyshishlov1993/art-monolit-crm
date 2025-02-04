@@ -119,7 +119,18 @@ function addSelectedValue(val) {
 
   calcTotalPrice();
 }
+function allowOnlyNumbers(event) {
+  const charCode = event.which ? event.which : event.keyCode;
 
+  if (
+    charCode !== 8 &&
+    charCode !== 9 &&
+    charCode !== 13 &&
+    (charCode < 48 || charCode > 57)
+  ) {
+    event.preventDefault();
+  }
+}
 function emitValue(row, fieldName, id) {
   emit("updateInput", "rowsWorks", id, row, fieldName);
 
@@ -240,6 +251,7 @@ onMounted(() => {
               type="string"
               dense
               borderless
+              @keypress="allowOnlyNumbers"
               @update:modelValue="
                 emitValue(props.row, props.row.price, props.row.id)
               "

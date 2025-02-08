@@ -4,10 +4,13 @@ import { useUserStore } from "@/stores/User";
 
 export async function login(name, password) {
   try {
-    const response = await axios.post("http://localhost:8000/auth/login", {
-      name,
-      password,
-    });
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/auth/login`,
+      {
+        name,
+        password,
+      }
+    );
 
     const { accessToken, permissions, refreshToken, user } = response.data;
 
@@ -19,9 +22,6 @@ export async function login(name, password) {
 
     const userStore = useUserStore();
     userStore.user = user;
-
-    console.log("user", user);
-    console.log("userStore", userStore.user);
 
     const permissionStore = usePermissionStore();
     permissionStore.setPermissions(permissions);
@@ -46,16 +46,19 @@ export async function logout() {
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
   try {
-    const response = await axios.post("http://localhost:8000/auth/logout", {
-      accessToken,
-      refreshToken,
-    });
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/auth/logout`,
+      {
+        accessToken,
+        refreshToken,
+      }
+    );
 
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken", refreshToken);
     localStorage.removeItem("permissions");
     localStorage.removeItem("isOwner");
-    localStorage.removeItem("user", user);
+    localStorage.removeItem("user");
   } catch (error) {
     console.error("ERROR LOGOUT", error);
   }

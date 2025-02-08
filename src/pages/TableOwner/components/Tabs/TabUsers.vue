@@ -144,8 +144,8 @@ import { useOwner } from "@/stores/Owner";
 
 const storeOwner = useOwner();
 const pagination = ref({
-  sortBy: "desc",
-  descending: false,
+  sortBy: "createdAt",
+  descending: true,
   rowsPerPage: 10,
 });
 

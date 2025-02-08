@@ -63,6 +63,7 @@ export const useDefective = defineStore("defective", () => {
       label: "Дата",
       align: "left",
       field: "createdAt",
+      field: (row) => new Date(row.createdAt).getTime(),
       sortable: true,
       format: (val) => formatDate(val),
     },
@@ -93,9 +94,12 @@ export const useDefective = defineStore("defective", () => {
       const params = {
         search: search,
       };
-      const response = await axios.get("http://localhost:8000/defective", {
-        params,
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/defective`,
+        {
+          params,
+        }
+      );
 
       rows.value = response.data.defective;
 
@@ -120,7 +124,7 @@ export const useDefective = defineStore("defective", () => {
   async function handleUpdateQuantity(row) {
     try {
       const response = await axios.put(
-        `http://localhost:8000/defective/update-quantity/${row.id}`,
+        `${import.meta.env.VITE_API_URL}/defective/update-quantity/${row.id}`,
         {
           quantity: row.quantity,
         }
@@ -154,7 +158,7 @@ export const useDefective = defineStore("defective", () => {
     }
     try {
       const response = await axios.delete(
-        `http://localhost:8000/defective/delete/${row.id}`
+        `${import.meta.env.VITE_API_URL}/defective/delete/${row.id}`
       );
 
       $q.notify({

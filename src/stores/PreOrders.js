@@ -78,12 +78,22 @@ export const usePreOrders = defineStore("preOrders", () => {
       label: "Дата",
       align: "left",
       field: "createdAt",
+      field: (row) => new Date(row.createdAt).getTime(),
       sortable: true,
       format: (val) => formatDate(val),
     },
   ];
   const movedPreOrders = ref({});
   const rows = ref([]);
+  const onePreOrder = ref({});
+
+  const pagination = ref({
+    page: 1,
+    rowsPerPage: 10,
+    rowsNumber: 0,
+    sortBy: "createdAt",
+    descending: true,
+  });
 
   function addRow() {
     rows.value.push({
@@ -125,7 +135,7 @@ export const usePreOrders = defineStore("preOrders", () => {
 
   async function createPreOrder(order, materials, services, works) {
     const response = await axios.post(
-      "http://localhost:8000/pre-orders/create-preorder",
+      `${import.meta.env.VITE_API_URL}/pre-orders/create-preorder`,
       {
         preOrderData: order,
         preOrderMaterials: materials,
@@ -147,7 +157,7 @@ export const usePreOrders = defineStore("preOrders", () => {
   async function deletePreOrder(id) {
     try {
       const response = await axios.delete(
-        `http://localhost:8000/pre-orders/remove-order/${id}`
+        `${import.meta.env.VITE_API_URL}/pre-orders/remove-order/${id}`
       );
 
       rows.value = rows.value.filter((el) => el.id !== id);
@@ -170,30 +180,46 @@ export const usePreOrders = defineStore("preOrders", () => {
       });
     }
   }
-  async function getPreOrders(status, startDate, endDate, search) {
+
+  async function getPreOrders(
+    status = null,
+    startDate = null,
+    endDate = null,
+    search = null,
+    page = pagination.value.page,
+    per_page = pagination.value.rowsPerPage,
+    storeAddress = null
+  ) {
     try {
       const params = {
-        startDate: startDate,
-        endDate: endDate,
-        search: search,
-        status: status,
+        status: status || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        search: search || undefined,
+        page: page || 1,
+        per_page: per_page || 10,
+        storeAddress: storeAddress || undefined,
       };
 
-      const orders = await axios.get("http://localhost:8000/pre-orders", {
-        params,
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/pre-orders`,
+        {
+          params,
+        }
+      );
 
-      rows.value = orders.data.orders;
+      if (!response.data.orders || response.data.orders.length === 0) {
+        console.warn("⚠️ Нет данных для текущей страницы!");
+        return;
+      }
 
-      $q.notify({
-        message: "Данные успешно загружены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
+      rows.value = response.data.orders;
+
+      pagination.value.page = response.data.currentPage;
+      pagination.value.rowsPerPage = response.data.perPage;
+      pagination.value.rowsNumber = response.data.totalOrders;
     } catch (error) {
-      console.error("Ошибка при получении данных:", error);
+      console.error("❌ Ошибка при получении предзаказов:", error);
 
       $q.notify({
         message: `Ошибка: ${error.response?.data?.message || error.message}`,
@@ -201,12 +227,11 @@ export const usePreOrders = defineStore("preOrders", () => {
         icon: "error",
         timeout: 3000,
       });
-    } finally {
     }
   }
   async function updatePreOrder(id, order, materials, services, works) {
     const response = await axios.put(
-      `http://localhost:8000/pre-orders/update-preorder/${id}`,
+      `${import.meta.env.VITE_API_URL}/pre-orders/update-preorder/${id}`,
       {
         preOrderData: order,
         preOrderMaterials: materials,
@@ -235,5 +260,7 @@ export const usePreOrders = defineStore("preOrders", () => {
     getCurrentDate,
     movedPreOrders,
     movingPreOrderToOrder,
+    pagination,
+    onePreOrder,
   };
 });

@@ -58,6 +58,20 @@
             @update:model-value="filterStatus(select)"
           ></q-select>
 
+          <q-select
+            v-if="storeUser.user && storeUser.user.address === 'Все магазины'"
+            v-model="selectedStores"
+            :options="storeOwner.storeOptions"
+            outlined
+            dense
+            emit-value
+            map-options
+            option-value="id"
+            option-label="name"
+            class="q-mt-sm"
+            @update:model-value="handleStoreChange"
+          />
+
           <q-btn
             round
             color="deep-orange"

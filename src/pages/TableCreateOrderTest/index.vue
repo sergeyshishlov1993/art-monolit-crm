@@ -1,5 +1,12 @@
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from "vue";
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted,
+  onBeforeMount,
+  watchEffect,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useOrders } from "@/stores/Orders";
@@ -34,6 +41,7 @@ const dataTable = reactive({
     address: "",
     comment: "",
     status: "new",
+    isPublic: false,
   },
 
   rowsDead: [
@@ -95,6 +103,9 @@ import { useOrderManagement } from "./composables/useOrderManagement";
 import { useCalcTotalPrice } from "./composables/useCalcTotalPrice";
 import { useTableManagement } from "./composables/useTableManagement";
 import { usePDFGenerator } from "./composables/usePDFGenerator";
+import { useValidationOrder } from "./composables/useValidationOrder";
+
+const { isValid } = useValidationOrder(dataTable);
 
 const {
   calcFinalPrice,
@@ -132,6 +143,7 @@ const {
   sale,
   route,
   router,
+  isValid,
   isPublic
 );
 
@@ -175,7 +187,7 @@ const activeTabProps = computed(() => {
   }
 });
 
-onMounted(async () => {
+onBeforeMount(async () => {
   userStore.loadUserFromStorage();
 
   if (isOrderCreated.value) {
@@ -207,6 +219,10 @@ onMounted(async () => {
   }
 });
 
+if (isMoved.value) {
+  addMovedOrder(storePreOrder.movedPreOrders);
+}
+
 function changeTab(name) {
   currentTab.value = name;
 }
@@ -223,9 +239,8 @@ async function distributeData() {
   prepayment.value = order.value.prepayment;
   sale.value = order.value.sale;
   totalPrice.value = +order.value.totalPrice;
-  isPublic.value = order.value.isPublic;
 
-  const { address, comment, first_name, second_name, name, phone } =
+  const { address, comment, first_name, second_name, name, phone, isPublic } =
     order.value;
   dataTable.customer = {
     address,
@@ -234,6 +249,7 @@ async function distributeData() {
     second_name,
     name,
     phone,
+    isPublic,
   };
   dataTable.rowsDead = order.value.OrderDeads;
   dataTable.rowsMaterials = order.value.OrderMaterials;

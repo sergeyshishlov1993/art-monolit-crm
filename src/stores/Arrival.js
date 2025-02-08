@@ -70,6 +70,7 @@ export const useArrival = defineStore("arrival", () => {
       label: "Дата",
       align: "left",
       field: "createdAt",
+      field: (row) => new Date(row.createdAt).getTime(),
       sortable: true,
       format: (val) => formatDate(val),
     },
@@ -125,7 +126,7 @@ export const useArrival = defineStore("arrival", () => {
   async function clearTableArrival() {
     try {
       const response = await axios.delete(
-        `http://localhost:8000/arrival/clear`
+        `${import.meta.env.VITE_API_URL}/arrival/clear`
       );
 
       $q.notify({
@@ -144,9 +145,12 @@ export const useArrival = defineStore("arrival", () => {
       const params = {
         search: search,
       };
-      const response = await axios.get("http://localhost:8000/arrival", {
-        params,
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/arrival`,
+        {
+          params,
+        }
+      );
 
       rows.value = response.data.arrival;
 
@@ -171,7 +175,7 @@ export const useArrival = defineStore("arrival", () => {
   async function handleAdd(item) {
     try {
       const response = await axios.post(
-        "http://localhost:8000/arrival/create",
+        `${import.meta.env.VITE_API_URL}/arrival/create`,
         {
           arrivalData: item,
         }
@@ -202,7 +206,7 @@ export const useArrival = defineStore("arrival", () => {
   async function handleUpdate(row) {
     try {
       const response = await axios.put(
-        `http://localhost:8000/arrival/update/${row.id}`,
+        `${import.meta.env.VITE_API_URL}/arrival/update/${row.id}`,
         {
           arrivalData: row,
         }
@@ -232,7 +236,7 @@ export const useArrival = defineStore("arrival", () => {
     if (row.id && !row.isCreated) {
       try {
         const response = await axios.delete(
-          `http://localhost:8000/arrival/delete/${row.id}`
+          `${import.meta.env.VITE_API_URL}/arrival/delete/${row.id}`
         );
         rows.value = rows.value.filter((r) => r !== row);
 
@@ -261,7 +265,7 @@ export const useArrival = defineStore("arrival", () => {
   async function transferDataToWarehouse() {
     try {
       const response = await axios.post(
-        `http://localhost:8000/arrival/transfer-to-warehouse`
+        `${import.meta.env.VITE_API_URL}/arrival/transfer-to-warehouse`
       );
 
       $q.notify({

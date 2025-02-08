@@ -6,6 +6,11 @@ import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 
 const storeArrival = useArrival();
 const searchQuery = ref("");
+const pagination = ref({
+  sortBy: "createdAt",
+  descending: true,
+  rowsPerPage: 10,
+});
 const debouncedSearch = debounce(fetchSearchResults, 500);
 const debouncedUpdate = debounce(async (row) => {
   await handleUpdate(row);

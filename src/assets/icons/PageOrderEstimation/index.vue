@@ -348,7 +348,7 @@ function generatePDF() {
 }
 async function getOrder() {
   const response = await axios.get(
-    `http://localhost:8000/pre-orders/${route.query.id}`
+    `${import.meta.env.VITE_API_URL}/pre-orders/${route.query.id}`
   );
 
   order.value = response.data.order;
@@ -393,7 +393,7 @@ async function saveOrder() {
     isProcessing.value = true;
     if (!isOrderCreated.value) {
       const response = await axios.post(
-        "http://localhost:8000/pre-orders/create-preorder",
+        `${import.meta.env.VITE_API_URL}/pre-orders/create-preorder`,
         {
           preOrderData: order,
           preOrderMaterials: order.dataTable.rowsMaterials,
@@ -414,7 +414,9 @@ async function saveOrder() {
     } else {
       isProcessing.value = true;
       const response = await axios.put(
-        `http://localhost:8000/pre-orders/update-preorder/${route.query.id}`,
+        `${import.meta.env.VITE_API_URL}/pre-orders/update-preorder/${
+          route.query.id
+        }`,
         {
           preOrderData: order,
           preOrderMaterials: order.dataTable.rowsMaterials,

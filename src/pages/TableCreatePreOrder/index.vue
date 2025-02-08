@@ -4,7 +4,10 @@ import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { usePreOrders } from "@/stores/PreOrders";
 import { useValidation } from "@/composables/useValidation";
+import { useUserStore } from "@/stores/User";
 import axios from "axios";
+
+const userStore = useUserStore();
 
 import TabMaterials from "@/components/Block/Tabs/TabMaterials.vue";
 import TabTypeWork from "@/components/Block/Tabs/TabTypeWork.vue";
@@ -195,7 +198,7 @@ function updateInput(table, id, row, fieldName) {
 
 async function getOrder() {
   const response = await axios.get(
-    `http://localhost:8000/pre-orders/${route.query.id}`
+    `${import.meta.env.VITE_API_URL}/pre-orders/${route.query.id}`
   );
 
   order.value = response.data.order;
@@ -226,16 +229,17 @@ function validateOrderData() {
 async function saveOrder() {
   isProcessing.value = true;
 
-  if (!validateOrderData()) {
-    isProcessing.value = false;
-    return;
-  }
+  // if (!validateOrderData()) {
+  //   isProcessing.value = false;
+  //   return;
+  // }
 
   const order = {
     id: crypto.randomUUID(),
     ...dataTable.customer,
     isDraft: true,
     isPublick: false,
+    storeAddress: userStore.user.address,
     source: selectedSource.value,
     totalPrice: totalPrice.value,
     currentData: storePreOrder.getCurrentDate(),

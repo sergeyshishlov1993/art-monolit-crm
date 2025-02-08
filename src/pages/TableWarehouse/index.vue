@@ -10,9 +10,9 @@ const storeWarehouse = useWarehouse();
 const permissionStore = usePermissionStore();
 const searchQuery = ref("");
 const pagination = ref({
-  sortBy: "name",
-  descending: false,
-  rowsPerPage: 20,
+  sortBy: "createdAt",
+  descending: true,
+  rowsPerPage: 10,
 });
 const debouncedSearch = debounce(fetchSearchResults, 500);
 

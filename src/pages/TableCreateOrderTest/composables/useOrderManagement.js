@@ -14,7 +14,7 @@ export function useOrderManagement(
   sale,
   route,
   router,
-  isPublic
+  isValid
 ) {
   const isOrderCreated = ref(route.query.isCreated === "false");
   const isMoved = ref(route.query.isMoved === "true");
@@ -36,6 +36,7 @@ export function useOrderManagement(
       name,
       phone,
       status: "new",
+      isPublic: false,
     };
     totalPrice.value = movedData.totalPrice;
     finalPrice.value = totalPrice.value;
@@ -45,19 +46,23 @@ export function useOrderManagement(
   }
 
   const saveDraftToLocalStorage = () => {
-    localStorage.setItem(
-      "orderDraft",
-      JSON.stringify({
-        ...dataTable,
-        createdAt: new Date().toISOString().replace("T", " ").slice(0, 19),
-        isDraft: true,
-        totalPrice: totalPrice.value,
-        finalPrice: finalPrice.value,
-        sale: sale.value,
-        status: "new",
-        prepayment: prepayment.value,
-      })
-    );
+    if (dataTable.customer.isPublic) {
+      return;
+    } else {
+      localStorage.setItem(
+        "orderDraft",
+        JSON.stringify({
+          ...dataTable,
+          createdAt: new Date().toISOString().replace("T", " ").slice(0, 19),
+          isDraft: true,
+          totalPrice: totalPrice.value,
+          finalPrice: finalPrice.value,
+          sale: sale.value,
+          status: "new",
+          prepayment: prepayment.value,
+        })
+      );
+    }
   };
   function sortPhotos(orderPhotoLinks) {
     const sorted = orderPhotoLinks.map((photo) => {
@@ -69,6 +74,7 @@ export function useOrderManagement(
       artistic: sorted.artistic || [],
     };
   }
+
   watch(
     dataTable,
     (newVal, oldVal) => {
@@ -80,10 +86,11 @@ export function useOrderManagement(
   async function saveOrder() {
     isProcessing.value = true;
 
-    // if (!validateOrderData()) {
-    //   isProcessing.value = false;
-    //   return;
-    // }
+    if (!isValid.value) {
+      isProcessing.value = false;
+      console.warn("❌ Валидация не пройдена!");
+      return;
+    }
 
     const order = {
       id: crypto.randomUUID(),
@@ -126,7 +133,7 @@ export function useOrderManagement(
 
         router.push("/orders");
       } else {
-        console.log("order.dataTable.rowsPhotos", order.dataTable.rowsPhotos);
+        console.log("photo update", dataTable.rowsPhotos);
         await store.updateOrder(
           route.query.id,
           order,
@@ -165,7 +172,6 @@ export function useOrderManagement(
     dataTable,
     addMovedOrder,
     isOrderCreated,
-    // validateOrderData,
     isProcessing,
     saveDraftToLocalStorage,
     saveOrder,

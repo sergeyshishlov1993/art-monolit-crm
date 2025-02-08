@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 
@@ -62,6 +62,7 @@ export const useMaterials = defineStore("materials", () => {
       label: "Дата",
       align: "left",
       field: "createdAt",
+      field: (row) => new Date(row.createdAt).getTime(),
       sortable: true,
       format: (val) => formatDate(val),
     },
@@ -123,7 +124,7 @@ export const useMaterials = defineStore("materials", () => {
   async function clearTableMaterials() {
     try {
       const response = await axios.delete(
-        `http://localhost:8000/materials/clear`
+        `${import.meta.env.VITE_API_URL}/materials/clear`
       );
 
       $q.notify({
@@ -142,13 +143,14 @@ export const useMaterials = defineStore("materials", () => {
       const params = {
         search: search,
       };
-      const response = await axios.get("http://localhost:8000/materials", {
-        params,
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/materials`,
+        {
+          params,
+        }
+      );
 
       rows.value = response.data.materials;
-
-      console.log(rows.value);
 
       $q.notify({
         message: "Данные (Материалы) успешно получены!",
@@ -171,7 +173,7 @@ export const useMaterials = defineStore("materials", () => {
   async function handleAdd(item) {
     try {
       const response = await axios.post(
-        "http://localhost:8000/materials/create",
+        `${import.meta.env.VITE_API_URL}/materials/create`,
         {
           materialsData: item,
         }
@@ -198,7 +200,7 @@ export const useMaterials = defineStore("materials", () => {
   async function handleUpdate(row) {
     try {
       const response = await axios.put(
-        `http://localhost:8000/materials/update/${row.id}`,
+        `${import.meta.env.VITE_API_URL}/materials/update/${row.id}`,
         {
           materialsData: row,
         }
@@ -232,7 +234,7 @@ export const useMaterials = defineStore("materials", () => {
     }
     try {
       const response = await axios.delete(
-        `http://localhost:8000/materials/delete/${row.id}`
+        `${import.meta.env.VITE_API_URL}/materials/delete/${row.id}`
       );
 
       $q.notify({
@@ -256,7 +258,7 @@ export const useMaterials = defineStore("materials", () => {
   async function transferDataToArrival() {
     try {
       const response = await axios.post(
-        `http://localhost:8000/materials/transfer-to-arrival`
+        `${import.meta.env.VITE_API_URL}/materials/transfer-to-arrival`
       );
 
       $q.notify({

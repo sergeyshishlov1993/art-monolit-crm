@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import TableOrders from "../pages/TableOrders/index.vue";
+import TableOrders from "../pages/TableOrdersTest/index.vue";
 import HelloPage from "../pages/HelloPage/index.vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { usePermissionStore } from "@/stores/PermissionStore";
@@ -36,7 +36,7 @@ const router = createRouter({
         {
           path: "/read-order",
           name: "readOrder",
-          component: () => import("../pages/TableReadOrder/index.vue"),
+          component: () => import("../pages/TableReadOrderTest/index.vue"),
         },
 
         {
@@ -49,41 +49,42 @@ const router = createRouter({
           path: "/calculate",
           name: "calculate",
           component: () =>
-            import("../pages/TablePreOrdersCalculation/index.vue"),
+            import("../pages/TablePreOrdersCalculationTest/index.vue"),
           meta: { requiresPermission: "calculation" },
         },
 
         {
           path: "/order-estimation",
           name: "calculate-create",
-          component: () => import("../pages/TableCreatePreOrder/index.vue"),
+          component: () => import("../pages/TableCreatePreOrderTest/index.vue"),
           meta: { requiresPermission: "calculation" },
         },
 
         {
           path: "/warehouse",
           name: "warehouse",
-          component: () => import("../pages/TableWarehouse/index.vue"),
+          component: () => import("../pages/TableWarehouseTest/index.vue"),
           meta: { requiresPermission: "warehouse" },
         },
 
         {
           path: "/arrival",
           name: "arrival",
-          component: () => import("../pages/TableArrival/index.vue"),
+          component: () => import("../pages/TableArrivalTest/index.vue"),
           meta: { requiresPermission: "arrival" },
         },
+
         {
           path: "/defective",
           name: "defective",
-          component: () => import("../pages/TableDefective/index.vue"),
+          component: () => import("../pages/TableDefectiveTest/index.vue"),
           meta: { requiresPermission: "defective" },
         },
 
         {
           path: "/materials",
           name: "materials",
-          component: () => import("../pages/TableMaterials/index.vue"),
+          component: () => import("../pages/TableMaterialsTest/index.vue"),
           meta: { requiresPermission: "materials" },
         },
       ],

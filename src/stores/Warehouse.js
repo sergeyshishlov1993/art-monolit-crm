@@ -76,6 +76,7 @@ export const useWarehouse = defineStore("warehouse", () => {
       label: "Дата",
       align: "left",
       field: "createdAt",
+      field: (row) => new Date(row.createdAt).getTime(),
       sortable: true,
       format: (val) => formatDate(val),
     },
@@ -125,7 +126,7 @@ export const useWarehouse = defineStore("warehouse", () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/warehouse/create",
+        `${import.meta.env.VITE_API_URL}/warehouse/create`,
         {
           item,
         }
@@ -152,7 +153,7 @@ export const useWarehouse = defineStore("warehouse", () => {
   async function handleUpdate(row) {
     try {
       const response = await axios.put(
-        `http://localhost:8000/warehouse/update/${row.id}`,
+        `${import.meta.env.VITE_API_URL}/warehouse/update/${row.id}`,
         {
           item: row,
         }
@@ -186,7 +187,7 @@ export const useWarehouse = defineStore("warehouse", () => {
     }
     try {
       const response = await axios.delete(
-        `http://localhost:8000/warehouse/delete/${row.id}`
+        `${import.meta.env.VITE_API_URL}/warehouse/delete/${row.id}`
       );
 
       $q.notify({
@@ -212,9 +213,12 @@ export const useWarehouse = defineStore("warehouse", () => {
       const params = {
         search: search,
       };
-      const response = await axios.get("http://localhost:8000/warehouse", {
-        params,
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/warehouse`,
+        {
+          params,
+        }
+      );
 
       rows.value = response.data.warehouse;
 

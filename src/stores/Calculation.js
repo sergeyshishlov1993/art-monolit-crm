@@ -54,8 +54,10 @@ export const useCalculation = defineStore("calculation", () => {
       name: "date",
       label: "Дата",
       align: "left",
-      field: "date",
+      field: "createdAt",
+      field: (row) => new Date(row.createdAt).getTime(),
       sortable: true,
+      format: (val) => formatDate(val),
     },
   ];
 

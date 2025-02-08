@@ -76,6 +76,7 @@ export const useOrders = defineStore("orders", () => {
       label: "Дата",
       align: "left",
       field: "createdAt",
+      field: (row) => new Date(row.createdAt).getTime(),
       sortable: true,
       format: (val) => formatDate(val),
     },
@@ -100,18 +101,21 @@ export const useOrders = defineStore("orders", () => {
     photo
   ) {
     const serializablePhoto = JSON.parse(JSON.stringify(photo));
-    const response = await axios.post("http://localhost:8000/orders/create", {
-      orderData: orderData,
-      orderDeads: deads,
-      orderMaterials: materials,
-      orderServices: services,
-      orderWorks: works,
-      rowsPhotos: serializablePhoto,
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/orders/create`,
+      {
+        orderData: orderData,
+        orderDeads: deads,
+        orderMaterials: materials,
+        orderServices: services,
+        orderWorks: works,
+        rowsPhotos: serializablePhoto,
 
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
     $q.notify({
       message: "Замовлення створено успішно!",
@@ -130,7 +134,7 @@ export const useOrders = defineStore("orders", () => {
         clearDraft();
       } else {
         const response = await axios.delete(
-          `http://localhost:8000/orders/remove-order/${id}`
+          `${import.meta.env.VITE_API_URL}/orders/remove-order/${id}`
         );
 
         rows.value = rows.value.filter((r) => r.id !== id);
@@ -158,10 +162,11 @@ export const useOrders = defineStore("orders", () => {
   async function changeStatusOrder(id, statuses, name) {
     try {
       const response = await axios.put(
-        "http://localhost:8000/orders/change-status-order",
+        `${import.meta.env.VITE_API_URL}/orders/change-status-order`,
         {
           orderId: id,
           statuses,
+          name: name,
         }
       );
 
@@ -198,9 +203,12 @@ export const useOrders = defineStore("orders", () => {
         storeAddress: storeAddress,
       };
 
-      const response = await axios.get("http://localhost:8000/orders", {
-        params,
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/orders`,
+        {
+          params,
+        }
+      );
 
       if (!response.data.orders || response.data.orders.length === 0) {
         console.warn("⚠️ Нет данных для текущей страницы!");
@@ -221,13 +229,11 @@ export const useOrders = defineStore("orders", () => {
   }
   async function getOrdersById(orderId) {
     try {
-      const order = await axios.get(`http://localhost:8000/orders/${orderId}`);
+      const order = await axios.get(
+        `${import.meta.env.VITE_API_URL}/orders/${orderId}`
+      );
 
-      oneOrder.value = order.data.order;
-
-      console.log("order", oneOrder.value);
-
-      // rows.value = order.data.order;
+      oneOrder.value = await order.data.order;
 
       $q.notify({
         message: "Данные успешно загружены!",
@@ -251,7 +257,9 @@ export const useOrders = defineStore("orders", () => {
   async function movePreOrderToOrder(id) {
     try {
       const response = axios.put(
-        `http://localhost:8000/pre-orders/update-preorder-status/${id}`
+        `${import.meta.env.VITE_API_URL}/pre-orders/update-preorder-status/${
+          id.value
+        }`
       );
 
       console.log("pre order move", response);
@@ -270,7 +278,7 @@ export const useOrders = defineStore("orders", () => {
   ) {
     try {
       const response = await axios.put(
-        `http://localhost:8000/orders/update/${id}`,
+        `${import.meta.env.VITE_API_URL}/orders/update/${id}`,
         {
           orderData: order,
           orderDeads: deads,
@@ -355,7 +363,8 @@ export const useOrders = defineStore("orders", () => {
     );
     if (alreadyExists) return parsedDraft;
 
-    if (!parsedDraft.isPublic) {
+    if (parsedDraft.isDraft) {
+      console.log("parsedDraft", parsedDraft);
       rows.value.unshift(parsedDraft);
     }
 
@@ -369,7 +378,9 @@ export const useOrders = defineStore("orders", () => {
   async function removeFromS3(fileKey) {
     try {
       const response = await axios.delete(
-        `http://localhost:8000/orders/delete-from-s3?fileKey=${fileKey}`
+        `${
+          import.meta.env.VITE_API_URL
+        }/orders/delete-from-s3?fileKey=${fileKey}`
       );
 
       console.log("Response", response);

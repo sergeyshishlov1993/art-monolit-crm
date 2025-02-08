@@ -38,19 +38,6 @@
             </q-popup-proxy>
           </div>
 
-          <!-- <q-input
-            class="input-search"
-            v-model="searchQuery"
-            @update:model-value="handlerSearch()"
-            outlined
-            placeholder="Введите текст для поиска"
-            clearable
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input> -->
-
           <q-select
             v-model="select"
             :options="statusOptions"
@@ -59,6 +46,7 @@
           ></q-select>
 
           <q-select
+            v-if="storeUser.user && storeUser.user.address === 'Все магазины'"
             v-model="selectedStores"
             :options="storeOwner.storeOptions"
             outlined

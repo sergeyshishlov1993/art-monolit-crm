@@ -127,8 +127,8 @@ import { ref, computed } from "vue";
 import { useOwner } from "@/stores/Owner";
 const storeOwner = useOwner();
 const pagination = ref({
-  sortBy: "decr",
-  descending: false,
+  sortBy: "createdAt",
+  descending: true,
   rowsPerPage: 10,
 });
 

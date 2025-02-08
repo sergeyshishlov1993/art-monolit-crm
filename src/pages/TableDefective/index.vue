@@ -7,9 +7,9 @@ import debounce from "lodash/debounce";
 const storeDefective = useDefective();
 const searchQuery = ref("");
 const pagination = ref({
-  sortBy: "name",
-  descending: false,
-  rowsPerPage: 20,
+  sortBy: "createdAt",
+  descending: true,
+  rowsPerPage: 10,
 });
 const debouncedSearch = debounce(fetchSearchResults, 500);
 const debouncedUpdateQuantity = debounce(async (row) => {

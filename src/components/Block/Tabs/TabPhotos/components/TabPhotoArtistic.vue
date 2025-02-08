@@ -80,7 +80,7 @@ const onFileChange = async (newFiles) => {
         const uniqueFileName = `${Date.now()}-${file.name.replace(/\s/g, "_")}`;
 
         const response = await axios.post(
-          "http://localhost:8000/api/s3-presigned-url",
+          `${import.meta.env.VITE_API_URL}/api/s3-presigned-url`,
           {
             fileName: uniqueFileName,
           }

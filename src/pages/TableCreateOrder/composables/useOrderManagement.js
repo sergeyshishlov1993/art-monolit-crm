@@ -2,6 +2,8 @@ import { watch, ref } from "vue";
 
 const isProcessing = ref(false);
 
+import { useValidation } from "@/composables/useValidation";
+
 export function useOrderManagement(
   dataTable,
   store,
@@ -16,6 +18,7 @@ export function useOrderManagement(
   router,
   isValid
 ) {
+  const { validateCustomerData, validationTable } = useValidation($q);
   const isOrderCreated = ref(route.query.isCreated === "false");
   const isMoved = ref(route.query.isMoved === "true");
   const movedId = ref(route.query.preOrderId);
@@ -86,7 +89,13 @@ export function useOrderManagement(
   async function saveOrder() {
     isProcessing.value = true;
 
-    if (!isValid.value) {
+    if (!validateCustomerData(dataTable.customer)) {
+      isProcessing.value = false;
+      console.warn("❌ Валидация не пройдена!");
+      return;
+    }
+
+    if (!validationTable(dataTable.rowsDead, "Умерший")) {
       isProcessing.value = false;
       console.warn("❌ Валидация не пройдена!");
       return;

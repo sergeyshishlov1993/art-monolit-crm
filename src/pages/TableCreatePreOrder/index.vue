@@ -1,28 +1,17 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useQuasar } from "quasar";
-import { usePreOrders } from "@/stores/PreOrders";
-import { useValidation } from "@/composables/useValidation";
+import { reactive, onMounted } from "vue";
+import { useOrderData } from "./composables/useOrderData";
+import { usePriceCalculation } from "./composables/usePriceCalculation";
+import { useTabsManagement } from "./composables/useTabsManagement";
+import { useTableManagement } from "./composables/useTableManagement";
+import { useOrderActions } from "./composables/useOrderActions";
 import { useUserStore } from "@/stores/User";
-import axios from "axios";
-
-const userStore = useUserStore();
-
-import TabMaterials from "@/components/Block/Tabs/TabMaterials.vue";
-import TabTypeWork from "@/components/Block/Tabs/TabTypeWork.vue";
-import TabServices from "@/components/Block/Tabs/TabServices.vue";
+import { useValidationOrder } from "./composables/useValidationOrder";
 import TheTabs from "@/components/Block/TheTabs.vue";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 import UiTextH2 from "@/components/Ui/UiTextH2.vue";
 
-const $q = useQuasar();
-const route = useRoute();
-const router = useRouter();
-const { validateCustomerData } = useValidation($q);
-
-const accountNumber = ref(route.query.accountNumber);
-const currentTab = ref("");
+const userStore = useUserStore();
 const dataTable = reactive({
   customer: {
     name: "",
@@ -62,236 +51,41 @@ const dataTable = reactive({
     },
   ],
 });
-const finalPrice = ref(0);
-const isProcessing = ref(false);
-const isOrderCreated = ref(route.query.isCreated === "false");
-const order = ref({});
-const selectedSource = ref("Магазин");
-const source = ["Google", "Facebook", "Instagram", "Рекомендация", "Магазин"];
-const storePreOrder = usePreOrders();
-const tabs = [
-  { name: "Материалы" },
-  { name: "Виды работ" },
-  { name: "Услуги" },
-];
-const totalPrice = ref(0);
 
-const formatCurrency = (value) => {
-  return parseFloat(value || 0).toLocaleString("ru-RU");
-};
+const {
+  getOrder,
+  accountNumber,
+  selectedSource,
+  source,
+  isOrderCreated,
+  selectSource,
+  finalPrice,
+} = useOrderData(dataTable);
 
-const activeTabComponent = computed(() => {
-  switch (currentTab.value) {
-    case "Материалы":
-      return TabMaterials;
+const { totalPrice, formatFinalPrice, calcTotalPrice, formatCurrency } =
+  usePriceCalculation(dataTable, isOrderCreated);
 
-    case "Виды работ":
-      return TabTypeWork;
+const { currentTab, tabs, changeTab, activeTabComponent, activeTabProps } =
+  useTabsManagement(dataTable, isOrderCreated);
 
-    case "Услуги":
-      return TabServices;
-  }
-});
-const activeTabProps = computed(() => {
-  switch (currentTab.value) {
-    case "Материалы":
-      return {
-        rows: dataTable.rowsMaterials,
-        isCreated: isOrderCreated.value,
-      };
-    case "Виды работ":
-      return { rows: dataTable.rowsWorks };
-    case "Услуги":
-      return { rows: dataTable.rowsServices };
-    default:
-      return {};
-  }
-});
-const formatFinalPrice = computed(() => {
-  return formatCurrency(finalPrice.value);
-});
+const { addItem, addSelectedValue, updateInput, createCell, removeItem } =
+  useTableManagement(dataTable, calcTotalPrice);
+
+const { isValid } = useValidationOrder(dataTable);
+const { isProcessing, saveOrder } = useOrderActions(
+  dataTable,
+  userStore,
+  selectedSource,
+  totalPrice,
+  isOrderCreated,
+  isValid
+);
 
 onMounted(async () => {
   if (isOrderCreated.value) {
     await getOrder();
   }
 });
-
-function addItem(tableName, item) {
-  if (tableName === "rowsWorks") {
-    dataTable.rowsWorks.push(item);
-  } else {
-    dataTable[tableName].push(
-      reactive({
-        id: crypto.randomUUID(),
-        accountNumber: dataTable[tableName].length + 1,
-        name: "Выбрать",
-        quantity: 1,
-        price: 0,
-      })
-    );
-  }
-}
-function addSelectedValue(val, table) {
-  const idx = dataTable[table].findIndex((el) => el.id === val.id);
-
-  dataTable[table][idx] = val;
-
-  calcTotalPrice();
-}
-function calcTotalPrice() {
-  const materials = dataTable.rowsMaterials.reduce((acc, row) => {
-    const price = parseFloat(row.price) || 0;
-    const qty = parseFloat(row.quantity) || 1;
-    return acc + price * qty;
-  }, 0);
-
-  const services = dataTable.rowsServices.reduce((acc, row) => {
-    const price = parseFloat(row.price) || 0;
-    const qty = parseFloat(row.quantity) || 1;
-    return acc + price * qty;
-  }, 0);
-
-  const works = dataTable.rowsWorks.reduce((acc, row) => {
-    const price = parseFloat(row.price) || 0;
-    const qty = parseFloat(row.quantity) || 1;
-    return acc + price * qty;
-  }, 0);
-
-  totalPrice.value = materials + services + works;
-
-  formatCurrency((finalPrice.value = totalPrice.value));
-}
-function changeTab(name) {
-  currentTab.value = name;
-}
-function createCell(table, val, id) {
-  dataTable[table] = val;
-
-  calcTotalPrice();
-}
-
-function selectSource(select) {
-  selectSource.value = select;
-}
-function removeItem(table, id) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
-
-  if (idx !== -1) {
-    dataTable[table].splice(idx, 1);
-
-    dataTable[table].forEach((item, index) => {
-      item.accountNumber = index + 1;
-    });
-  }
-
-  calcTotalPrice();
-}
-
-function updateInput(table, id, row, fieldName) {
-  const idx = dataTable[table].findIndex((el) => el.id === id);
-  const key = Object.keys(row).find((k) => row[k] === fieldName);
-
-  dataTable[table][idx][key] = row[key];
-  calcTotalPrice();
-}
-
-async function getOrder() {
-  const response = await axios.get(
-    `${import.meta.env.VITE_API_URL}/pre-orders/${route.query.id}`
-  );
-
-  order.value = response.data.order;
-  finalPrice.value = +order.value.totalPrice;
-
-  const { address, comment, first_name, second_name, name, phone } =
-    order.value;
-
-  dataTable.customer = {
-    address,
-    comment,
-    first_name,
-    second_name,
-    name,
-    phone,
-  };
-  dataTable.rowsMaterials = order.value.PreOrderMaterials;
-  dataTable.rowsServices = order.value.PreOrderServices;
-  dataTable.rowsWorks = order.value.PreOrderWorks;
-}
-
-function validateOrderData() {
-  const isCustomerValid = validateCustomerData(dataTable.customer);
-
-  return isCustomerValid;
-}
-
-async function saveOrder() {
-  isProcessing.value = true;
-
-  // if (!validateOrderData()) {
-  //   isProcessing.value = false;
-  //   return;
-  // }
-
-  const order = {
-    id: crypto.randomUUID(),
-    ...dataTable.customer,
-    isDraft: true,
-    isPublick: false,
-    storeAddress: userStore.user.address,
-    source: selectedSource.value,
-    totalPrice: totalPrice.value,
-    currentData: storePreOrder.getCurrentDate(),
-
-    dataTable: {
-      rowsMaterials: dataTable.rowsMaterials,
-      rowsServices: dataTable.rowsServices,
-      rowsWorks: dataTable.rowsWorks,
-    },
-  };
-
-  try {
-    isProcessing.value = true;
-    if (!isOrderCreated.value) {
-      console.log(order);
-      await storePreOrder.createPreOrder(
-        order,
-        dataTable.rowsMaterials,
-        dataTable.rowsServices,
-        dataTable.rowsWorks
-      );
-
-      router.push("/calculate");
-    } else {
-      isProcessing.value = true;
-
-      storePreOrder.updatePreOrder(
-        route.query.id,
-        order,
-        order.dataTable.rowsMaterials,
-        order.dataTable.rowsServices,
-        order.dataTable.rowsWorks
-      );
-    }
-
-    isOrderCreated.value = false;
-    isProcessing.value = false;
-
-    router.push("/calculate");
-  } catch (error) {
-    $q.notify({
-      message: `Помилка: ${error.response?.data?.message || error.message}`,
-      color: "negative",
-      icon: "error",
-      position: "top-right",
-      timeout: 3000,
-    });
-    console.error("Помилка при збереженні замовлення:", error);
-  } finally {
-    isProcessing.value = false;
-  }
-}
 </script>
 
 <template>
@@ -422,7 +216,15 @@ async function saveOrder() {
     <div class="total-summary">
       <div class="total-summary__row total-summary__row--final">
         <span>Итоговая сумма</span>
-        <span>{{ formatFinalPrice }} ₴</span>
+
+        <span
+          >{{
+            formatFinalPrice === "0"
+              ? formatCurrency(finalPrice)
+              : formatFinalPrice
+          }}
+          ₴</span
+        >
       </div>
     </div>
 

@@ -1,145 +1,18 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
-import { useMaterials } from "@/stores/Materials";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
-import debounce from "lodash/debounce";
+import { useMaterialsFilters } from "./composables/useMaterialsFilters";
+import { useMaterialsActions } from "./composables/useMaterialsActions";
+import { useMaterialsPDF } from "./composables/useMaterialsPDF";
+import { useMaterialsTable } from "./composables/useMaterialsTable";
+import { useMaterialsStoreInit } from "./composables/useMaterialsStoreInit";
 
-const storeMaterials = useMaterials();
-const searchQuery = ref("");
-const pagination = ref({
-  sortBy: "name",
-  descending: false,
-  rowsPerPage: 10,
-});
-const totalWeight = computed(() => storeMaterials.calculateTotalWeight());
-const debouncedSearch = debounce(fetchSearchResults, 500);
-const debouncedUpdate = debounce(async (row) => {
-  await handleUpdate(row);
-}, 3000);
+const { searchQuery, fetchSearchResults } = useMaterialsFilters();
+const { handleAdd, allowOnlyNumbers, handlerFocusInput, clearTableMaterials } =
+  useMaterialsActions();
+const { generatePDF } = useMaterialsPDF();
+const { storeMaterials, pagination } = useMaterialsTable();
 
-onMounted(async () => {
-  await storeMaterials.fetchMaterialsData();
-});
-
-watch(searchQuery, (newValue) => {
-  debouncedSearch(newValue);
-});
-
-function generatePDF() {
-  const docDefinition = {
-    content: [
-      {
-        text: `Заказ ${storeMaterials.getCurrentDate()}`,
-        style: "header",
-        alignment: "center",
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: ["*", "*", "*", "*", "*", "*", "*"],
-
-          body: [
-            [
-              "Номер",
-              "Название",
-              "Длина",
-              "Ширина",
-              "Толщина",
-              "Вес",
-              "Количество",
-            ],
-            ...storeMaterials.rows.map((row, index) => [
-              index + 1,
-              row.name,
-              row.length,
-              row.width,
-              row.thickness,
-              row.weight,
-              row.quantity,
-            ]),
-          ],
-        },
-
-        layout: "grid",
-      },
-      {
-        text: `общий вес ${totalWeight.value} кг`,
-        style: "header",
-        alignment: "right",
-        margin: [0, 10, 0, 5],
-      },
-    ],
-    styles: {
-      header: {
-        fontSize: 18,
-        bold: true,
-        margin: [0, 0, 0, 20],
-      },
-      subheader: {
-        fontSize: 14,
-        bold: true,
-        margin: [0, 15, 0, 10],
-      },
-    },
-    defaultStyle: {
-      fontSize: 12,
-    },
-  };
-
-  pdfMake
-    .createPdf(docDefinition)
-    .download(`Заказ ${storeMaterials.getCurrentDate()} .pdf`);
-}
-
-async function fetchSearchResults(query) {
-  await storeMaterials.fetchMaterialsData(query);
-}
-
-async function handleAdd(item) {
-  storeMaterials.handleAdd(item);
-
-  const idx = storeMaterials.rows.findIndex((el) => el.id === item.id);
-  storeMaterials.rows[idx].isCreated = false;
-}
-
-async function handleUpdate(row) {
-  try {
-    await storeMaterials.handleUpdate(row);
-    row.isChanged = false;
-  } catch (error) {
-    console.error("Ошибка при обновлении количества:", error);
-  }
-}
-function allowOnlyNumbers(event, n) {
-  if (n === "name") {
-    return;
-  }
-  const charCode = event.which ? event.which : event.keyCode;
-
-  if (
-    charCode !== 8 &&
-    charCode !== 9 &&
-    charCode !== 13 &&
-    (charCode < 48 || charCode > 57)
-  ) {
-    event.preventDefault();
-  }
-}
-function handlerFocusInput(row) {
-  row.isChanged = true;
-
-  if (!row.isCreated) {
-    debouncedUpdate(row);
-  }
-}
-
-async function clearTableMaterials() {
-  await storeMaterials.clearTableMaterials();
-
-  storeMaterials.rows = [];
-}
+useMaterialsStoreInit();
 </script>
 
 <template>
@@ -179,13 +52,19 @@ async function clearTableMaterials() {
         row-key="id"
       >
         <template v-slot:body-cell-accountNumber="props">
-          <q-td :props="props">
+          <q-td
+            :props="props"
+            :class="{ 'highlight-cell': props.row.isCreateMenedger }"
+          >
             {{ props.pageIndex + 1 }}
           </q-td>
         </template>
 
         <template v-slot:body-cell="props">
-          <q-td :props="props">
+          <q-td
+            :props="props"
+            :class="{ 'highlight-cell': props.row.isCreateMenedger }"
+          >
             <q-input
               v-model.number="props.row[props.col.name]"
               input-class="text-left"
@@ -199,13 +78,20 @@ async function clearTableMaterials() {
         </template>
 
         <template v-slot:body-cell-createdAt="props">
-          <q-td :props="props">
+          <q-td
+            :props="props"
+            :class="{ 'highlight-cell': props.row.isCreateMenedger }"
+          >
             {{ storeMaterials.formatDate(props.row.createdAt) }}
           </q-td>
         </template>
 
         <template v-slot:body-cell-delete="props">
-          <q-td :props="props" class="text-center">
+          <q-td
+            :props="props"
+            class="text-center"
+            :class="{ 'highlight-cell': props.row.isCreateMenedger }"
+          >
             <div class="actions-btn">
               <q-btn
                 :disable="!props.row.isChanged"
@@ -236,8 +122,8 @@ async function clearTableMaterials() {
 
     <UiTextH1 class="total-weight">
       <span>общий вес:</span>
-      {{ totalWeight.toLocaleString("ru-RU") }} кг</UiTextH1
-    >
+      {{ storeMaterials.calculateTotalWeight().toLocaleString("ru-RU") }} кг
+    </UiTextH1>
 
     <div class="button-group">
       <q-btn
@@ -307,5 +193,10 @@ async function clearTableMaterials() {
 .actions-btn {
   display: flex;
   gap: 10px;
+}
+
+.highlight-cell {
+  background-color: rgba(255, 235, 59, 0.15) !important;
+  transition: background-color 0.3s ease-in-out;
 }
 </style>

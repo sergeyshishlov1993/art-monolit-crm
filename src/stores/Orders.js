@@ -364,7 +364,6 @@ export const useOrders = defineStore("orders", () => {
     if (alreadyExists) return parsedDraft;
 
     if (parsedDraft.isDraft) {
-      console.log("parsedDraft", parsedDraft);
       rows.value.unshift(parsedDraft);
     }
 
@@ -382,8 +381,6 @@ export const useOrders = defineStore("orders", () => {
           import.meta.env.VITE_API_URL
         }/orders/delete-from-s3?fileKey=${fileKey}`
       );
-
-      console.log("Response", response);
     } catch (error) {}
   }
 

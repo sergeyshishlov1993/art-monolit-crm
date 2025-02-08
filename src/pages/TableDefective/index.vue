@@ -1,46 +1,54 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
-import { useDefective } from "@/stores/Defective";
-import debounce from "lodash/debounce";
+// import { useDefective } from "@/stores/Defective";
+// import debounce from "lodash/debounce";
 
-const storeDefective = useDefective();
-const searchQuery = ref("");
-const pagination = ref({
-  sortBy: "createdAt",
-  descending: true,
-  rowsPerPage: 10,
-});
-const debouncedSearch = debounce(fetchSearchResults, 500);
-const debouncedUpdateQuantity = debounce(async (row) => {
-  await handleUpdate(row);
-}, 1500);
+// const storeDefective = useDefective();
+// const searchQuery = ref("");
+// const pagination = ref({
+//   sortBy: "createdAt",
+//   descending: true,
+//   rowsPerPage: 10,
+// });
+// const debouncedSearch = debounce(fetchSearchResults, 500);
+// const debouncedUpdateQuantity = debounce(async (row) => {
+//   await handleUpdate(row);
+// }, 1500);
 
-onMounted(async () => {
-  await storeDefective.getDefectiveData();
-});
+// onMounted(async () => {
+//   await storeDefective.getDefectiveData();
+// });
 
-watch(searchQuery, (newValue) => {
-  debouncedSearch(newValue);
-});
+// watch(searchQuery, (newValue) => {
+//   debouncedSearch(newValue);
+// });
 
-async function fetchSearchResults(query) {
-  await storeDefective.getDefectiveData(query);
-}
+// async function fetchSearchResults(query) {
+//   await storeDefective.getDefectiveData(query);
+// }
 
-async function handleUpdate(row) {
-  try {
-    await storeDefective.handleUpdateQuantity(row);
-    row.isChanged = false;
-  } catch (error) {
-    console.error("Ошибка при обновлении количества:", error);
-  }
-}
+// async function handleUpdate(row) {
+//   try {
+//     await storeDefective.handleUpdateQuantity(row);
+//     row.isChanged = false;
+//   } catch (error) {
+//     console.error("Ошибка при обновлении количества:", error);
+//   }
+// }
 
-function handlerFocusInput(row) {
-  row.isChanged = true;
-  debouncedUpdateQuantity(row);
-}
+// function handlerFocusInput(row) {
+//   row.isChanged = true;
+//   debouncedUpdateQuantity(row);
+// }
+
+import { useDefectiveTable } from "./composables/useDefectiveTable";
+import { useDefectiveActions } from "./composables/useDefectiveActions";
+import { useDefectiveFilters } from "./composables/useDefectiveFilters";
+
+const { storeDefective, pagination } = useDefectiveTable();
+const { handleUpdate, handlerFocusInput } = useDefectiveActions();
+const { searchQuery, fetchSearchResults } = useDefectiveFilters();
 </script>
 
 <template>

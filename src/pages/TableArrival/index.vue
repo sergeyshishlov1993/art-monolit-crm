@@ -1,66 +1,13 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
-import { useArrival } from "@/stores/Arrival";
-import debounce from "lodash/debounce";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
+import { useArrivalTable } from "./composables/useArrivalTable";
+import { useArrivalActions } from "./composables/useArrivalActions";
+import { useArrivalFilters } from "./composables/useArrivalFilters";
 
-const storeArrival = useArrival();
-const searchQuery = ref("");
-const pagination = ref({
-  sortBy: "createdAt",
-  descending: true,
-  rowsPerPage: 10,
-});
-const debouncedSearch = debounce(fetchSearchResults, 500);
-const debouncedUpdate = debounce(async (row) => {
-  await handleUpdate(row);
-}, 3000);
-onMounted(async () => {
-  await storeArrival.fetchMaterialsData();
-});
-watch(searchQuery, (newValue) => {
-  debouncedSearch(newValue);
-});
-
-async function clearTableArrival() {
-  await storeArrival.clearTableArrival();
-
-  storeArrival.rows = [];
-}
-async function fetchSearchResults(query) {
-  await storeArrival.fetchMaterialsData(query);
-}
-async function handleUpdate(row) {
-  try {
-    await storeArrival.handleUpdate(row);
-    row.isChanged = false;
-  } catch (error) {
-    console.error("Ошибка при обновлении количества:", error);
-  }
-}
-
-function allowOnlyNumbers(event, n) {
-  if (n === "name") {
-    return;
-  }
-  const charCode = event.which ? event.which : event.keyCode;
-
-  if (
-    charCode !== 8 &&
-    charCode !== 9 &&
-    charCode !== 13 &&
-    (charCode < 48 || charCode > 57)
-  ) {
-    event.preventDefault();
-  }
-}
-function handlerFocusInput(row) {
-  row.isChanged = true;
-
-  if (!row.isCreated) {
-    debouncedUpdate(row);
-  }
-}
+const { storeArrival, pagination } = useArrivalTable();
+const { handleUpdate, handlerFocusInput, allowOnlyNumbers, clearTableArrival } =
+  useArrivalActions();
+const { searchQuery, fetchSearchResults } = useArrivalFilters();
 </script>
 
 <template>

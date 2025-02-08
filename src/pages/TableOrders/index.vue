@@ -32,17 +32,17 @@
                 v-model="selectedDateRange"
                 range
                 mask="YYYY-MM-DD"
-                default-year-month="2024/01"
+                default-year-month="2025/01"
                 @update:model-value="updateFormattedDateRange"
               />
             </q-popup-proxy>
           </div>
 
           <q-select
-            v-model="select"
+            v-model="selectedStatus"
             :options="statusOptions"
             class="select-filter"
-            @update:model-value="filterStatus(select)"
+            @update:model-value="filterStatus(selectedStatus)"
           ></q-select>
 
           <q-select
@@ -241,171 +241,44 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useOrders } from "@/stores/Orders";
-import { useOwner } from "@/stores/Owner";
 import { useUserStore } from "@/stores/User";
 import { usePermissionStore } from "@/stores/PermissionStore";
+import { useOrders } from "@/stores/Orders";
+import { useOrdersFilters } from "./composables/useOrdersFilters";
+import { useOrdersActions } from "./composables/useOrdersActions";
+import { useOrdersPagination } from "./composables/useOrdersPagination";
+import { useOrdersStoreInit } from "./composables/useOrdersStoreInit";
+import { useOrdersStatus } from "./composables/useOrdersStatus";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
-
-const loading = ref(false);
 
 const store = useOrders();
 const storeUser = useUserStore();
-const storeOwner = useOwner();
 const permissionStore = usePermissionStore();
-
 const canWrite = permissionStore.hasPermission("can_write_orders");
-const isCreated = ref(false);
-const router = useRouter();
-const formattedDateRange = ref("");
 
-const searchQuery = ref("");
-const select = ref("Новый");
-const selectedDateRange = ref({ from: "", to: "" });
-const showCalendar = ref(false);
-const statusOptions = [
-  { label: "Новый", value: "new" },
-  { label: "Макет", value: "layout" },
-  { label: "Принят Макет", value: "layout_accepted" },
-  { label: "Гравировка(Фронт)", value: "engraving_front" },
-  { label: "Гравировка(Реверс)", value: "engraving_reverse" },
-  { label: "Гравировка(Плита)", value: "engraving_plate" },
-  { label: "Гравировка(Тумба)", value: "engraving_stand" },
-  { label: "Фрезеровка", value: "milling" },
-  { label: "Бетонирование", value: "concreting" },
-  { label: "Укладка плитки", value: "laying_tiles" },
-  { label: "Установка", value: "installation" },
-  { label: "Завершен", value: "completed" },
-];
-const selectedStores = ref("Космическая 63");
+const {
+  formattedDateRange,
+  selectedDateRange,
+  selectedStores,
+  selectedStatus,
+  statusOptions,
+  searchQuery,
+  updateFormattedDateRange,
+  handleStoreChange,
+  filterStatus,
+  handlerSearch,
+  resetFilters,
+  showCalendar,
+} = useOrdersFilters();
 
-const handleStoreChange = async (storeId) => {
-  const storeAdress = storeOwner.storeOptions.find((s) => s.id === storeId);
+const { addItem, openOrder, removeOrder } = useOrdersActions(canWrite);
+const { onRequest } = useOrdersPagination();
+const { getStatusClass, lastActiveStatus, updateStatuses } = useOrdersStatus(
+  statusOptions,
+  store
+);
 
-  await store.getOrders(
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    storeAdress ? storeAdress.name : null
-  );
-};
-
-const getStatusClass = (statuses) => {
-  if (!statuses || statuses.length === 0) return "status-default";
-  const lastStatus = statuses[statuses.length - 1];
-  return `status-${lastStatus}`;
-};
-
-onMounted(async () => {
-  await store.getOrders(
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    storeUser.user.address
-  );
-  await storeOwner.getAllStores();
-
-  store.getSavedDraft();
-});
-
-const formatDate = (date) => {
-  const [year, month, day] = date.split("-");
-  return `${day}.${month}.${year}`;
-};
-const updateFormattedDateRange = async (range) => {
-  if (range?.from && range?.to) {
-    formattedDateRange.value = `${formatDate(range.from)} - ${formatDate(
-      range.to
-    )}`;
-
-    await store.getOrders(
-      null,
-      selectedDateRange.value.from,
-      selectedDateRange.value.to
-    );
-  } else {
-    formattedDateRange.value = "";
-  }
-
-  showCalendar.value = false;
-};
-
-function addItem() {
-  router.push(
-    `/create?id=id&accountNumber=${store.rows.length + 1}&isCreated=true`
-  );
-  store.addRow();
-
-  store.clearDraft();
-
-  isCreated.value = true;
-}
-
-async function updateStatuses(row) {
-  if (row.activeStatuses.length) {
-    await store.changeStatusOrder(row.id, row.activeStatuses, row.name);
-  } else {
-    await store.changeStatusOrder(row.id, [], row.name);
-  }
-}
-
-function lastActiveStatus(activeStatuses) {
-  if (!activeStatuses || !activeStatuses.length) return "Не выбрано";
-  const lastValue = activeStatuses[activeStatuses.length - 1];
-  return (
-    statusOptions.find((option) => option.value === lastValue)?.label ||
-    "Не выбрано"
-  );
-}
-
-function openOrder(id, isDraft) {
-  if (isDraft) {
-    isCreated.value = true;
-  }
-
-  router.push(
-    canWrite
-      ? `/create?id=${id}&accountNumber=${store.rows.length}&isCreated=${isCreated.value}`
-      : `/read-order?id=${id}&accountNumber=${store.rows.length}`
-  );
-}
-
-async function filterStatus(status) {
-  await store.getOrders(status.value);
-}
-async function handlerSearch() {
-  await store.getOrders(null, null, null, searchQuery.value);
-}
-async function resetFilters() {
-  selectedDateRange.value = { from: "2025-01-01", to: "2025-02-01" };
-  formattedDateRange.value = "01.01.2025 - 01.02.2025";
-  select.value = "Новый";
-  searchQuery.value = "";
-
-  await store.getOrders();
-}
-
-const onRequest = async (params) => {
-  loading.value = true;
-
-  try {
-    const { page, rowsPerPage } = params.pagination;
-
-    await store.getOrders(null, null, null, null, page || 1, rowsPerPage || 10);
-  } catch (error) {
-    console.error("❌ Ошибка загрузки заказов:", error);
-  } finally {
-    loading.value = false;
-  }
-};
+useOrdersStoreInit();
 </script>
 
 <style lang="scss" scoped>

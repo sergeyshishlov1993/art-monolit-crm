@@ -32,30 +32,17 @@
                 v-model="selectedDateRange"
                 range
                 mask="YYYY-MM-DD"
-                default-year-month="2024/01"
+                default-year-month="2025/01"
                 @update:model-value="updateFormattedDateRange"
               />
             </q-popup-proxy>
           </div>
 
-          <q-input
-            class="input-search"
-            v-model="searchQuery"
-            @update:model-value="handlerSearch()"
-            outlined
-            placeholder="Введите текст для поиска"
-            clearable
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
-
           <q-select
-            v-model="select"
+            v-model="selectedStatus"
             :options="statusOptions"
             class="select-filter"
-            @update:model-value="filterStatus(select)"
+            @update:model-value="filterStatus(selectedStatus)"
           ></q-select>
 
           <q-select
@@ -87,14 +74,29 @@
     </q-expansion-item>
 
     <div class="q-pa-md">
-      <q-btn
-        color="green"
-        icon="add"
-        round
-        dense
-        @click="addItem"
-        class="q-mb-lg"
-      ></q-btn>
+      <div class="header">
+        <q-btn
+          color="green"
+          icon="add"
+          round
+          dense
+          @click="addItem"
+          class="q-mb-lg"
+        ></q-btn>
+
+        <q-input
+          class="input-search"
+          v-model="searchQuery"
+          @update:model-value="handlerSearch()"
+          outlined
+          placeholder="Введите текст для поиска"
+          clearable
+        >
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </div>
 
       <q-table
         class="my-sticky-header-table"
@@ -103,7 +105,8 @@
         :rows="store.rows"
         :columns="store.columns"
         row-key="accountNumber"
-        v-model:pagination="pagination"
+        v-model:pagination="store.pagination"
+        @request="onRequest"
       >
         <template v-slot:header="props">
           <q-tr :props="props">
@@ -204,7 +207,16 @@
                 </p>
                 <p>Телефон: {{ props.row.phone }}</p>
                 <p>Назва: {{ props.row.name }}</p>
-                <p>Дата: {{ props.row.date }}</p>
+                <p>
+                  Дата:
+                  {{
+                    new Date(props.row.createdAt).toLocaleString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  }}
+                </p>
                 <p>Ціна: {{ props.row.totalPrice }} грн</p>
               </div>
             </q-td>
@@ -216,104 +228,45 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useQuasar } from "quasar";
 import { usePreOrders } from "@/stores/PreOrders";
-import { useOrders } from "@/stores/Orders";
+import { useUserStore } from "@/stores/User";
+import { useOwner } from "@/stores/Owner";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 
-const formattedDateRange = ref("01.01.2024 - 01.02.2024");
-const router = useRouter();
-const isCreated = ref(false);
-const isProcessing = ref(false);
-const pagination = ref({
-  sortBy: "desc",
-  descending: false,
-  rowsPerPage: 20,
-});
-const searchQuery = ref("");
-const select = ref("Просчет");
-const statusOptions = ref([
-  { label: "Просчет", value: "isDraft" },
-  { label: "В заказах", value: "isPublic" },
-]);
-const selectedDateRange = ref({ from: "2024-01-01", to: "2024-02-01" });
-const showCalendar = ref(false);
+import { usePreOrderFilters } from "./composables/usePreOrderFilters";
+import { usePreOrderActions } from "./composables/usePreOrderActions";
+import { usePreOrderPagination } from "./composables/usePreOrderPagination";
+import { usePreOrderStatus } from "./composables/usePreOrderStatus";
+import { usePreOrderStoreInit } from "./composables/usePreOrderStoreInit";
+
+const {
+  formattedDateRange,
+  selectedDateRange,
+  selectedStores,
+  statusOptions,
+  selectedStatus,
+  searchQuery,
+  showCalendar,
+  updateFormattedDateRange,
+  handleStoreChange,
+  filterStatus,
+  handlerSearch,
+  resetFilters,
+  formatDate,
+} = usePreOrderFilters();
+
+const { addItem, openOrder, moveItem, removeItem, isProcessing } =
+  usePreOrderActions();
+
+const { onRequest } = usePreOrderPagination();
+
+const { getStatusColor, getStatusText } = usePreOrderStatus();
+
+usePreOrderStoreInit();
+
 const store = usePreOrders();
-const storeOrders = useOrders();
-
-onMounted(async () => {
-  await store.getPreOrders();
-});
-
-const formatDate = (date) => {
-  const [year, month, day] = date.split("-");
-  return `${day}.${month}.${year}`;
-};
-const updateFormattedDateRange = async (range) => {
-  if (range?.from && range?.to) {
-    formattedDateRange.value = `${formatDate(range.from)} - ${formatDate(
-      range.to
-    )}`;
-
-    await store.getPreOrders(
-      null,
-      selectedDateRange.value.from,
-      selectedDateRange.value.to
-    );
-  } else {
-    formattedDateRange.value = "";
-  }
-
-  showCalendar.value = false;
-};
-
-function addItem() {
-  router.push(
-    `/order-estimation?id=id&accountNumber=${
-      store.rows.length + 1
-    }&isCreated=true`
-  );
-  store.addRow();
-
-  isCreated.value = true;
-}
-function openOrder(id) {
-  router.push(
-    `/order-estimation?id=${id}&accountNumber=${store.rows.length}&isCreated=${isCreated.value}`
-  );
-}
-function moveItem(item) {
-  store.movingPreOrderToOrder(item);
-  router.push(
-    `/create?id=id&accountNumber=${
-      storeOrders.rows.length + 1
-    }&isCreated=true&isMoved=true&preOrderId=${item.id}`
-  );
-
-  storeOrders.addRow();
-}
-
-async function handlerSearch() {
-  await store.getPreOrders(null, null, null, searchQuery.value);
-}
-async function removeItem(id) {
-  isProcessing.value = true;
-  await store.deletePreOrder(id);
-}
-async function resetFilters() {
-  selectedDateRange.value = { from: "2024-01-01", to: "2024-02-01" };
-  formattedDateRange.value = "01.01.2024 - 01.02.2024";
-  select.value = "Просчет";
-  searchQuery.value = "";
-
-  await store.getPreOrders();
-}
-
-async function filterStatus(status) {
-  await store.getPreOrders(status.value);
-}
+const storeOwner = useOwner();
+const storeUser = useUserStore();
 </script>
 
 <style lang="scss" scoped>
@@ -326,6 +279,18 @@ async function filterStatus(status) {
   display: flex;
   flex-direction: column;
   gap: 50px;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 40px;
+
+  margin-bottom: 30px;
+
+  .input-search {
+    width: 100%;
+  }
 }
 
 .settings {

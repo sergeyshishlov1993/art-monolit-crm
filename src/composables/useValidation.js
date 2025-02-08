@@ -1,8 +1,29 @@
 export function useValidation($q) {
-  function validateCustomerData(customer) {
-    let isValid = true;
+  // function validateCustomerData(customer) {
+  //   let isValid = true;
 
-    Object.entries(customer).forEach(([key, value]) => {
+  //   Object.entries(customer).forEach(([key, value]) => {
+  //     if (
+  //       value === null ||
+  //       value === undefined ||
+  //       (typeof value === "string" && value.trim().length === 0)
+  //     ) {
+  //       $q.notify({
+  //         message: `Данные о заказчике внесены не полностью`,
+  //         color: "negative",
+  //         icon: "error",
+  //         position: "top-right",
+  //         timeout: 3000,
+  //       });
+  //       isValid = false;
+  //     }
+  //   });
+
+  //   return isValid;
+  // }
+
+  function validateCustomerData(customer) {
+    for (const [key, value] of Object.entries(customer)) {
       if (
         value === null ||
         value === undefined ||
@@ -15,11 +36,10 @@ export function useValidation($q) {
           position: "top-right",
           timeout: 3000,
         });
-        isValid = false;
+        return false; // Останавливаем выполнение при первой ошибке
       }
-    });
-
-    return isValid;
+    }
+    return true;
   }
 
   function validationTable(tableData, tableName) {

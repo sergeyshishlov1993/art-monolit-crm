@@ -18,7 +18,9 @@ export function useOrderData(dataTable, totalPrice) {
 
   async function getOrder() {
     const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/pre-orders/${route.query.id}`
+      `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/pre-orders/${
+        route.query.id
+      }`
     );
 
     order.value = response.data.order;

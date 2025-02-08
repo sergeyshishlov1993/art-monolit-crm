@@ -5,7 +5,7 @@ import { useUserStore } from "@/stores/User";
 export async function login(name, password) {
   try {
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/auth/login`,
+      `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/auth/login`,
       {
         name,
         password,
@@ -47,7 +47,7 @@ export async function logout() {
   const refreshToken = getRefreshToken();
   try {
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/auth/logout`,
+      `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/auth/logout`,
       {
         accessToken,
         refreshToken,

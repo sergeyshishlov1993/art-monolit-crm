@@ -135,7 +135,9 @@ export const usePreOrders = defineStore("preOrders", () => {
 
   async function createPreOrder(order, materials, services, works) {
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/pre-orders/create-preorder`,
+      `${
+        import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+      }/pre-orders/create-preorder`,
       {
         preOrderData: order,
         preOrderMaterials: materials,
@@ -157,7 +159,9 @@ export const usePreOrders = defineStore("preOrders", () => {
   async function deletePreOrder(id) {
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/pre-orders/remove-order/${id}`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/pre-orders/remove-order/${id}`
       );
 
       rows.value = rows.value.filter((el) => el.id !== id);
@@ -202,7 +206,9 @@ export const usePreOrders = defineStore("preOrders", () => {
       };
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/pre-orders`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/pre-orders`,
         {
           params,
         }
@@ -231,7 +237,9 @@ export const usePreOrders = defineStore("preOrders", () => {
   }
   async function updatePreOrder(id, order, materials, services, works) {
     const response = await axios.put(
-      `${import.meta.env.VITE_API_URL}/pre-orders/update-preorder/${id}`,
+      `${
+        import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+      }/pre-orders/update-preorder/${id}`,
       {
         preOrderData: order,
         preOrderMaterials: materials,

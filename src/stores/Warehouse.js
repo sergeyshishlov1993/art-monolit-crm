@@ -126,7 +126,9 @@ export const useWarehouse = defineStore("warehouse", () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/warehouse/create`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/warehouse/create`,
         {
           item,
         }
@@ -153,7 +155,9 @@ export const useWarehouse = defineStore("warehouse", () => {
   async function handleUpdate(row) {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/warehouse/update/${row.id}`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/warehouse/update/${row.id}`,
         {
           item: row,
         }
@@ -187,7 +191,9 @@ export const useWarehouse = defineStore("warehouse", () => {
     }
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/warehouse/delete/${row.id}`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/warehouse/delete/${row.id}`
       );
 
       $q.notify({
@@ -214,7 +220,7 @@ export const useWarehouse = defineStore("warehouse", () => {
         search: search,
       };
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/warehouse`,
+        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/warehouse`,
         {
           params,
         }

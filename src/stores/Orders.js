@@ -102,7 +102,9 @@ export const useOrders = defineStore("orders", () => {
   ) {
     const serializablePhoto = JSON.parse(JSON.stringify(photo));
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/orders/create`,
+      `${
+        import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+      }/orders/create`,
       {
         orderData: orderData,
         orderDeads: deads,
@@ -134,7 +136,9 @@ export const useOrders = defineStore("orders", () => {
         clearDraft();
       } else {
         const response = await axios.delete(
-          `${import.meta.env.VITE_API_URL}/orders/remove-order/${id}`
+          `${
+            import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+          }/orders/remove-order/${id}`
         );
 
         rows.value = rows.value.filter((r) => r.id !== id);
@@ -162,7 +166,9 @@ export const useOrders = defineStore("orders", () => {
   async function changeStatusOrder(id, statuses, name) {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/orders/change-status-order`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/orders/change-status-order`,
         {
           orderId: id,
           statuses,
@@ -204,7 +210,7 @@ export const useOrders = defineStore("orders", () => {
       };
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/orders`,
+        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/orders`,
         {
           params,
         }
@@ -230,7 +236,9 @@ export const useOrders = defineStore("orders", () => {
   async function getOrdersById(orderId) {
     try {
       const order = await axios.get(
-        `${import.meta.env.VITE_API_URL}/orders/${orderId}`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/orders/${orderId}`
       );
 
       oneOrder.value = await order.data.order;
@@ -257,9 +265,9 @@ export const useOrders = defineStore("orders", () => {
   async function movePreOrderToOrder(id) {
     try {
       const response = axios.put(
-        `${import.meta.env.VITE_API_URL}/pre-orders/update-preorder-status/${
-          id.value
-        }`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/pre-orders/update-preorder-status/${id.value}`
       );
 
       console.log("pre order move", response);
@@ -278,7 +286,9 @@ export const useOrders = defineStore("orders", () => {
   ) {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/orders/update/${id}`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/orders/update/${id}`,
         {
           orderData: order,
           orderDeads: deads,
@@ -378,7 +388,7 @@ export const useOrders = defineStore("orders", () => {
     try {
       const response = await axios.delete(
         `${
-          import.meta.env.VITE_API_URL
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
         }/orders/delete-from-s3?fileKey=${fileKey}`
       );
     } catch (error) {}

@@ -126,7 +126,9 @@ export const useArrival = defineStore("arrival", () => {
   async function clearTableArrival() {
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/arrival/clear`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/arrival/clear`
       );
 
       $q.notify({
@@ -146,7 +148,7 @@ export const useArrival = defineStore("arrival", () => {
         search: search,
       };
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/arrival`,
+        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/arrival`,
         {
           params,
         }
@@ -175,7 +177,9 @@ export const useArrival = defineStore("arrival", () => {
   async function handleAdd(item) {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/arrival/create`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/arrival/create`,
         {
           arrivalData: item,
         }
@@ -206,7 +210,9 @@ export const useArrival = defineStore("arrival", () => {
   async function handleUpdate(row) {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/arrival/update/${row.id}`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/arrival/update/${row.id}`,
         {
           arrivalData: row,
         }
@@ -265,7 +271,9 @@ export const useArrival = defineStore("arrival", () => {
   async function transferDataToWarehouse() {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/arrival/transfer-to-warehouse`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/arrival/transfer-to-warehouse`
       );
 
       $q.notify({

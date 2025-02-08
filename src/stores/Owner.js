@@ -285,7 +285,9 @@ export const useOwner = defineStore("owner", () => {
   async function createUserAssignRole(row) {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/owner/create-user`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/create-user`,
         {
           name: row.name,
           password: row.password,
@@ -322,7 +324,9 @@ export const useOwner = defineStore("owner", () => {
   async function createRoleWithPermissions(row, permissionIds) {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/owner/create-role-with-permissions`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/create-role-with-permissions`,
         {
           name: row.name,
           permissionIds,
@@ -357,7 +361,9 @@ export const useOwner = defineStore("owner", () => {
   async function createStore(row) {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/owner/create-store`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/create-store`,
         {
           name: row.name,
         }
@@ -391,7 +397,9 @@ export const useOwner = defineStore("owner", () => {
   async function getAllUsers() {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/owner/users`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/users`
       );
 
       rowsUser.value = response.data;
@@ -418,7 +426,9 @@ export const useOwner = defineStore("owner", () => {
   async function getAllRows() {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/owner/roles`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/roles`
       );
 
       rowsRole.value = response.data.map((role) => {
@@ -464,7 +474,9 @@ export const useOwner = defineStore("owner", () => {
   async function getAllStores() {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/owner/stores`
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/stores`
       );
 
       rowsStores.value = response.data.stores;
@@ -497,7 +509,9 @@ export const useOwner = defineStore("owner", () => {
         console.log(`Pending: ${permissionKey} = ${value}`);
       } else {
         await axios.put(
-          `${import.meta.env.VITE_API_URL}/owner/update-role-permissions`,
+          `${
+            import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+          }/owner/update-role-permissions`,
           {
             roleId: row.id,
             permissionIds: permissionKey,
@@ -528,7 +542,9 @@ export const useOwner = defineStore("owner", () => {
     if (row.id && !row.isCreated) {
       try {
         await axios.delete(
-          `${import.meta.env.VITE_API_URL}/owner/delete-role/${row.id}`
+          `${
+            import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+          }/owner/delete-role/${row.id}`
         );
         rowsRole.value = rowsRole.value.filter((r) => r.id !== row.id);
 
@@ -557,7 +573,9 @@ export const useOwner = defineStore("owner", () => {
     if (row.id && !row.isCreated) {
       try {
         await axios.delete(
-          `${import.meta.env.VITE_API_URL}/owner/delete-user/${row.id}`
+          `${
+            import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+          }/owner/delete-user/${row.id}`
         );
         rowsUser.value = rowsUser.value.filter((r) => r.id !== row.id);
         $q.notify({
@@ -586,7 +604,9 @@ export const useOwner = defineStore("owner", () => {
     if (row.id && !row.isCreated) {
       try {
         await axios.delete(
-          `${import.meta.env.VITE_API_URL}/owner/delete-store/${row.id}`
+          `${
+            import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+          }/owner/delete-store/${row.id}`
         );
         rowsStores.value = rowsStores.value.filter((r) => r.id !== row.id);
         $q.notify({
@@ -613,7 +633,9 @@ export const useOwner = defineStore("owner", () => {
   async function updateUser(row) {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/owner/update-user/${row.id}`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/update-user/${row.id}`,
         {
           name: row.name,
           password: row.password + "",
@@ -647,7 +669,9 @@ export const useOwner = defineStore("owner", () => {
   async function updateStore(row) {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/owner/update-store/${row.id}`,
+        `${
+          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
+        }/owner/update-store/${row.id}`,
         {
           name: row.name,
         }

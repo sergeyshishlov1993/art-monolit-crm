@@ -147,14 +147,6 @@ export const useMaterials = defineStore("materials", () => {
       });
 
       rows.value = response.data.materials;
-
-      $q.notify({
-        message: "Данные (Материалы) успешно получены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("error", error);
 
@@ -195,7 +187,7 @@ export const useMaterials = defineStore("materials", () => {
       const response = await axios.put(`${ApiUrl}/materials/update/${row.id}`, {
         materialsData: row,
       });
-      console.log("Обновление строки", response);
+
       row.isChanged = false;
 
       $q.notify({

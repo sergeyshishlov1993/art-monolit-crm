@@ -20,9 +20,9 @@ export function usePreOrderActions() {
     isCreated.value = true;
   };
 
-  const openOrder = (id) => {
+  const openOrder = (order) => {
     router.push(
-      `/order-estimation?id=${id}&accountNumber=${store.rows.length}&isCreated=${isCreated.value}`
+      `/order-estimation?id=${order.id}&accountNumber=${store.rows.length}&isCreated=${isCreated.value}&isPublic=${order.isDraft}`
     );
   };
 

@@ -11,7 +11,6 @@ export function useOrderData(dataTable) {
   onMounted(async () => {
     await store.getOrdersById(route.query.id);
 
-    console.log("store ... . .", store.rows);
     sortDataOrder(store, dataTable);
   });
 

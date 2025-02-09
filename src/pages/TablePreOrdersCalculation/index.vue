@@ -134,7 +134,7 @@
               v-for="col in props.cols"
               :key="col.name"
               :props="props"
-              @click="openOrder(props.row.id)"
+              @click="openOrder(props.row)"
             >
               <template v-if="col.name === 'accountNumber'">
                 <q-td>{{ props.pageIndex + 1 }}</q-td>

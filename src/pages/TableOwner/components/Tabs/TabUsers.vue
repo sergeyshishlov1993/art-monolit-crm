@@ -179,7 +179,7 @@ const initializeStores = () => {
 
 const handleRoleChange = (userId, row) => {
   const newRoleId = selectedRoles[userId];
-  console.log(`Роль користувача ${userId} змінено на: ${newRoleId}`);
+
   touchInput(row);
 };
 

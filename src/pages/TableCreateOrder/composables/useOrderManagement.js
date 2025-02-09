@@ -142,7 +142,6 @@ export function useOrderManagement(
 
         router.push("/orders");
       } else {
-        console.log("photo update", dataTable.rowsPhotos);
         await store.updateOrder(
           route.query.id,
           order,

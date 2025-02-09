@@ -60,6 +60,7 @@ const {
   isOrderCreated,
   selectSource,
   finalPrice,
+  isPublic,
 } = useOrderData(dataTable);
 
 const { totalPrice, formatFinalPrice, calcTotalPrice, formatCurrency } =
@@ -78,11 +79,12 @@ const { isProcessing, saveOrder } = useOrderActions(
   selectedSource,
   totalPrice,
   isOrderCreated,
-  isValid
+  isValid,
+  isPublic
 );
 
 onMounted(async () => {
-  if (isOrderCreated.value) {
+  if (isOrderCreated.value && isPublic.value) {
     await getOrder();
   }
 });

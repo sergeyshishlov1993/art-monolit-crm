@@ -388,14 +388,6 @@ export const useOwner = defineStore("owner", () => {
       const response = await axios.get(`${ApiUrl}/owner/users`);
 
       rowsUser.value = response.data;
-
-      $q.notify({
-        message: "Пользователи получины!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("error", error);
 
@@ -432,14 +424,6 @@ export const useOwner = defineStore("owner", () => {
           ...permissions,
         };
       });
-
-      $q.notify({
-        message: "Роли получены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("error", error);
 
@@ -457,16 +441,6 @@ export const useOwner = defineStore("owner", () => {
       const response = await axios.get(`${ApiUrl}/owner/stores`);
 
       rowsStores.value = response.data.stores;
-
-      console.log(rowsStores.value);
-
-      $q.notify({
-        message: "Список магазинов получины!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("error", error);
 
@@ -483,7 +457,6 @@ export const useOwner = defineStore("owner", () => {
     try {
       const value = row[permissionKey];
       if (row.isCreated) {
-        console.log(`Pending: ${permissionKey} = ${value}`);
       } else {
         await axios.put(`${ApiUrl}/owner/update-role-permissions`, {
           roleId: row.id,

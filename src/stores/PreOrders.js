@@ -236,7 +236,7 @@ export const usePreOrders = defineStore("preOrders", () => {
     );
 
     $q.notify({
-      message: "Замовлення оновлено успішно!",
+      message: "Просчет обновлен!",
       color: "positive",
       icon: "check_circle",
       position: "top-right",

@@ -116,7 +116,7 @@ export const useOrders = defineStore("orders", () => {
     });
 
     $q.notify({
-      message: "Замовлення створено успішно!",
+      message: "Заказ добавлен!",
       color: "positive",
       icon: "check_circle",
       position: "top-right",
@@ -164,8 +164,6 @@ export const useOrders = defineStore("orders", () => {
         statuses,
         name: name,
       });
-
-      console.log("Response", response);
 
       $q.notify({
         message: `Статусы для заказа ${name} изменены`,
@@ -224,14 +222,6 @@ export const useOrders = defineStore("orders", () => {
       const order = await axios.get(`${ApiUrl}/orders/${orderId}`);
 
       oneOrder.value = await order.data.order;
-
-      $q.notify({
-        message: "Данные успешно загружены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("Ошибка при получении данных:", error);
 
@@ -249,8 +239,6 @@ export const useOrders = defineStore("orders", () => {
       const response = axios.put(
         `${ApiUrl}/pre-orders/update-preorder-status/${id.value}`
       );
-
-      console.log("pre order move", response);
     } catch (error) {
       console.error("error", error);
     }

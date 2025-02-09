@@ -153,7 +153,7 @@ export const useWarehouse = defineStore("warehouse", () => {
       const response = await axios.put(`${ApiUrl}/warehouse/update/${row.id}`, {
         item: row,
       });
-      console.log("Обновление строки", response);
+
       row.isChanged = false;
 
       $q.notify({
@@ -213,14 +213,6 @@ export const useWarehouse = defineStore("warehouse", () => {
       });
 
       rows.value = response.data.warehouse;
-
-      $q.notify({
-        message: "Данные (склад) успешно получены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("error", error);
 

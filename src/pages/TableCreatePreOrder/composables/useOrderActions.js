@@ -9,7 +9,8 @@ export function useOrderActions(
   selectedSource,
   totalPrice,
   isOrderCreated,
-  isValid
+  isValid,
+  isPublic
 ) {
   const isProcessing = ref(false);
   const router = useRouter();
@@ -45,8 +46,7 @@ export function useOrderActions(
 
     try {
       isProcessing.value = true;
-      if (!isOrderCreated.value) {
-        console.log(order);
+      if (!isOrderCreated.value || !isPublic.value) {
         await storePreOrder.createPreOrder(
           order,
           dataTable.rowsMaterials,

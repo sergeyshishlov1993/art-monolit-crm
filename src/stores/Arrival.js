@@ -149,14 +149,6 @@ export const useArrival = defineStore("arrival", () => {
       });
 
       rows.value = response.data.arrival;
-
-      $q.notify({
-        message: "Данные (приход) успешно получены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("error", error);
 
@@ -201,7 +193,6 @@ export const useArrival = defineStore("arrival", () => {
       const response = await axios.put(`${ApiUrl}/arrival/update/${row.id}`, {
         arrivalData: row,
       });
-      console.log("Обновление строки", response);
       row.isChanged = false;
 
       $q.notify({

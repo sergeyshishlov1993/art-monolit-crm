@@ -6,6 +6,7 @@ import { ApiUrl } from "@/services/api";
 export function useOrderData(dataTable, totalPrice) {
   const route = useRoute();
   const isOrderCreated = ref(route.query.isCreated === "false");
+  const isPublic = ref(route.query.isPublic === "true");
   const order = ref({});
   const selectedSource = ref("Магазин");
   const source = ["Google", "Facebook", "Instagram", "Рекомендация", "Магазин"];
@@ -57,5 +58,6 @@ export function useOrderData(dataTable, totalPrice) {
     dataTable,
     getOrder,
     finalPrice,
+    isPublic,
   };
 }

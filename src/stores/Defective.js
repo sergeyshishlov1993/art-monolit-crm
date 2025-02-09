@@ -100,14 +100,6 @@ export const useDefective = defineStore("defective", () => {
       });
 
       rows.value = response.data.defective;
-
-      $q.notify({
-        message: "Данные (брак) успешно получены!",
-        color: "positive",
-        icon: "check_circle",
-        position: "top-right",
-        timeout: 2500,
-      });
     } catch (error) {
       console.error("error", error);
 
@@ -127,7 +119,7 @@ export const useDefective = defineStore("defective", () => {
           quantity: row.quantity,
         }
       );
-      console.log("Обновление количеста", response);
+
       row.isChanged = false;
 
       $q.notify({

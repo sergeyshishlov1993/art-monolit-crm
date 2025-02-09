@@ -249,9 +249,11 @@ import { useOrdersActions } from "./composables/useOrdersActions";
 import { useOrdersPagination } from "./composables/useOrdersPagination";
 import { useOrdersStoreInit } from "./composables/useOrdersStoreInit";
 import { useOrdersStatus } from "./composables/useOrdersStatus";
+import { useOwner } from "@/stores/Owner";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 
 const store = useOrders();
+const storeOwner = useOwner();
 const storeUser = useUserStore();
 const permissionStore = usePermissionStore();
 const canWrite = permissionStore.hasPermission("can_write_orders");

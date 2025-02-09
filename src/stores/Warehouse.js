@@ -205,7 +205,6 @@ export const useWarehouse = defineStore("warehouse", () => {
   }
   async function getWarehouseData(search) {
     try {
-      console.log("ApiUrl", ApiUrl);
       const params = {
         search: search,
       };

@@ -46,6 +46,7 @@
 import { ref, watch } from "vue";
 import axios from "axios";
 import PhotoCard from "./PhotoCard.vue";
+import { ApiUrl } from "@/services/api";
 
 const props = defineProps({
   rows: Array,
@@ -79,14 +80,9 @@ const onFileChange = async (newFiles) => {
       try {
         const uniqueFileName = `${Date.now()}-${file.name.replace(/\s/g, "_")}`;
 
-        const response = await axios.post(
-          `${
-            import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-          }/api/s3-presigned-url`,
-          {
-            fileName: uniqueFileName,
-          }
-        );
+        const response = await axios.post(`${ApiUrl}/api/s3-presigned-url`, {
+          fileName: uniqueFileName,
+        });
 
         const { presignedUrl, fileUrl, fileKey } = response.data;
 

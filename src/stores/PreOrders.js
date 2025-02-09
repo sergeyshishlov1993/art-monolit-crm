@@ -3,6 +3,7 @@ import { ref, reactive } from "vue";
 import { useQuasar } from "quasar";
 
 import axios from "axios";
+import { ApiUrl } from "@/services/api";
 
 export const usePreOrders = defineStore("preOrders", () => {
   const $q = useQuasar();
@@ -134,17 +135,12 @@ export const usePreOrders = defineStore("preOrders", () => {
   }
 
   async function createPreOrder(order, materials, services, works) {
-    const response = await axios.post(
-      `${
-        import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-      }/pre-orders/create-preorder`,
-      {
-        preOrderData: order,
-        preOrderMaterials: materials,
-        preOrderServices: services,
-        preOrderWorks: works,
-      }
-    );
+    const response = await axios.post(`${ApiUrl}/pre-orders/create-preorder`, {
+      preOrderData: order,
+      preOrderMaterials: materials,
+      preOrderServices: services,
+      preOrderWorks: works,
+    });
 
     $q.notify({
       message: `Просчет ${order.name} добавлен`,
@@ -159,9 +155,7 @@ export const usePreOrders = defineStore("preOrders", () => {
   async function deletePreOrder(id) {
     try {
       const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/pre-orders/remove-order/${id}`
+        `${ApiUrl}/pre-orders/remove-order/${id}`
       );
 
       rows.value = rows.value.filter((el) => el.id !== id);
@@ -205,14 +199,9 @@ export const usePreOrders = defineStore("preOrders", () => {
         storeAddress: storeAddress || undefined,
       };
 
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/pre-orders`,
-        {
-          params,
-        }
-      );
+      const response = await axios.get(`${ApiUrl}/pre-orders`, {
+        params,
+      });
 
       if (!response.data.orders || response.data.orders.length === 0) {
         console.warn("⚠️ Нет данных для текущей страницы!");
@@ -237,9 +226,7 @@ export const usePreOrders = defineStore("preOrders", () => {
   }
   async function updatePreOrder(id, order, materials, services, works) {
     const response = await axios.put(
-      `${
-        import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-      }/pre-orders/update-preorder/${id}`,
+      `${ApiUrl}/pre-orders/update-preorder/${id}`,
       {
         preOrderData: order,
         preOrderMaterials: materials,

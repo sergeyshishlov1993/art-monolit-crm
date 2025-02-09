@@ -1,16 +1,14 @@
 import axios from "axios";
 import { usePermissionStore } from "@/stores/PermissionStore";
 import { useUserStore } from "@/stores/User";
+import { ApiUrl } from "@/services/api";
 
 export async function login(name, password) {
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/auth/login`,
-      {
-        name,
-        password,
-      }
-    );
+    const response = await axios.post(`${ApiUrl}/auth/login`, {
+      name,
+      password,
+    });
 
     const { accessToken, permissions, refreshToken, user } = response.data;
 
@@ -46,13 +44,10 @@ export async function logout() {
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/auth/logout`,
-      {
-        accessToken,
-        refreshToken,
-      }
-    );
+    const response = await axios.post(`${ApiUrl}/auth/logout`, {
+      accessToken,
+      refreshToken,
+    });
 
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken", refreshToken);

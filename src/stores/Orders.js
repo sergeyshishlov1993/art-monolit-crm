@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useQuasar } from "quasar";
 
 import axios from "axios";
+import { ApiUrl } from "@/services/api";
 
 export const useOrders = defineStore("orders", () => {
   const $q = useQuasar();
@@ -101,23 +102,18 @@ export const useOrders = defineStore("orders", () => {
     photo
   ) {
     const serializablePhoto = JSON.parse(JSON.stringify(photo));
-    const response = await axios.post(
-      `${
-        import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-      }/orders/create`,
-      {
-        orderData: orderData,
-        orderDeads: deads,
-        orderMaterials: materials,
-        orderServices: services,
-        orderWorks: works,
-        rowsPhotos: serializablePhoto,
+    const response = await axios.post(`${ApiUrl}/orders/create`, {
+      orderData: orderData,
+      orderDeads: deads,
+      orderMaterials: materials,
+      orderServices: services,
+      orderWorks: works,
+      rowsPhotos: serializablePhoto,
 
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
     $q.notify({
       message: "Замовлення створено успішно!",
@@ -136,9 +132,7 @@ export const useOrders = defineStore("orders", () => {
         clearDraft();
       } else {
         const response = await axios.delete(
-          `${
-            import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-          }/orders/remove-order/${id}`
+          `${ApiUrl}/orders/remove-order/${id}`
         );
 
         rows.value = rows.value.filter((r) => r.id !== id);
@@ -165,16 +159,11 @@ export const useOrders = defineStore("orders", () => {
 
   async function changeStatusOrder(id, statuses, name) {
     try {
-      const response = await axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/orders/change-status-order`,
-        {
-          orderId: id,
-          statuses,
-          name: name,
-        }
-      );
+      const response = await axios.put(`${ApiUrl}/orders/change-status-order`, {
+        orderId: id,
+        statuses,
+        name: name,
+      });
 
       console.log("Response", response);
 
@@ -209,12 +198,9 @@ export const useOrders = defineStore("orders", () => {
         storeAddress: storeAddress,
       };
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/orders`,
-        {
-          params,
-        }
-      );
+      const response = await axios.get(`${ApiUrl}/orders`, {
+        params,
+      });
 
       if (!response.data.orders || response.data.orders.length === 0) {
         console.warn("⚠️ Нет данных для текущей страницы!");
@@ -235,11 +221,7 @@ export const useOrders = defineStore("orders", () => {
   }
   async function getOrdersById(orderId) {
     try {
-      const order = await axios.get(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/orders/${orderId}`
-      );
+      const order = await axios.get(`${ApiUrl}/orders/${orderId}`);
 
       oneOrder.value = await order.data.order;
 
@@ -265,9 +247,7 @@ export const useOrders = defineStore("orders", () => {
   async function movePreOrderToOrder(id) {
     try {
       const response = axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/pre-orders/update-preorder-status/${id.value}`
+        `${ApiUrl}/pre-orders/update-preorder-status/${id.value}`
       );
 
       console.log("pre order move", response);
@@ -285,19 +265,14 @@ export const useOrders = defineStore("orders", () => {
     photo
   ) {
     try {
-      const response = await axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/orders/update/${id}`,
-        {
-          orderData: order,
-          orderDeads: deads,
-          orderMaterials: materials,
-          orderServices: services,
-          orderWorks: works,
-          rowsPhotos: photo,
-        }
-      );
+      const response = await axios.put(`${ApiUrl}/orders/update/${id}`, {
+        orderData: order,
+        orderDeads: deads,
+        orderMaterials: materials,
+        orderServices: services,
+        orderWorks: works,
+        rowsPhotos: photo,
+      });
 
       $q.notify({
         message: `${order.name} успешно был обновлен!`,
@@ -387,9 +362,7 @@ export const useOrders = defineStore("orders", () => {
   async function removeFromS3(fileKey) {
     try {
       const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/orders/delete-from-s3?fileKey=${fileKey}`
+        `${ApiUrl}/orders/delete-from-s3?fileKey=${fileKey}`
       );
     } catch (error) {}
   }

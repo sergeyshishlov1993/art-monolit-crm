@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
+import { ApiUrl } from "@/services/api";
 
 export const useArrival = defineStore("arrival", () => {
   const $q = useQuasar();
@@ -125,11 +126,7 @@ export const useArrival = defineStore("arrival", () => {
 
   async function clearTableArrival() {
     try {
-      const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/arrival/clear`
-      );
+      const response = await axios.delete(`${ApiUrl}/arrival/clear`);
 
       $q.notify({
         message: "Успешно очишена таблицы Материалы",
@@ -147,12 +144,9 @@ export const useArrival = defineStore("arrival", () => {
       const params = {
         search: search,
       };
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/arrival`,
-        {
-          params,
-        }
-      );
+      const response = await axios.get(`${ApiUrl}/arrival`, {
+        params,
+      });
 
       rows.value = response.data.arrival;
 
@@ -176,14 +170,9 @@ export const useArrival = defineStore("arrival", () => {
   }
   async function handleAdd(item) {
     try {
-      const response = await axios.post(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/arrival/create`,
-        {
-          arrivalData: item,
-        }
-      );
+      const response = await axios.post(`${ApiUrl}/arrival/create`, {
+        arrivalData: item,
+      });
 
       $q.notify({
         message: "Успешно cоздано!",
@@ -209,14 +198,9 @@ export const useArrival = defineStore("arrival", () => {
   }
   async function handleUpdate(row) {
     try {
-      const response = await axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/arrival/update/${row.id}`,
-        {
-          arrivalData: row,
-        }
-      );
+      const response = await axios.put(`${ApiUrl}/arrival/update/${row.id}`, {
+        arrivalData: row,
+      });
       console.log("Обновление строки", response);
       row.isChanged = false;
 
@@ -242,7 +226,7 @@ export const useArrival = defineStore("arrival", () => {
     if (row.id && !row.isCreated) {
       try {
         const response = await axios.delete(
-          `${import.meta.env.VITE_API_URL}/arrival/delete/${row.id}`
+          `${ApiUrl}/arrival/delete/${row.id}`
         );
         rows.value = rows.value.filter((r) => r !== row);
 
@@ -271,9 +255,7 @@ export const useArrival = defineStore("arrival", () => {
   async function transferDataToWarehouse() {
     try {
       const response = await axios.post(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/arrival/transfer-to-warehouse`
+        `${ApiUrl}/arrival/transfer-to-warehouse`
       );
 
       $q.notify({

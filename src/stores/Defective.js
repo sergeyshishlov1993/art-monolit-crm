@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
+import { ApiUrl } from "@/services/api";
 
 export const useDefective = defineStore("defective", () => {
   const $q = useQuasar();
@@ -94,12 +95,9 @@ export const useDefective = defineStore("defective", () => {
       const params = {
         search: search,
       };
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/defective`,
-        {
-          params,
-        }
-      );
+      const response = await axios.get(`${ApiUrl}/defective`, {
+        params,
+      });
 
       rows.value = response.data.defective;
 
@@ -124,9 +122,7 @@ export const useDefective = defineStore("defective", () => {
   async function handleUpdateQuantity(row) {
     try {
       const response = await axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/defective/update-quantity/${row.id}`,
+        `${ApiUrl}/defective/update-quantity/${row.id}`,
         {
           quantity: row.quantity,
         }
@@ -160,9 +156,7 @@ export const useDefective = defineStore("defective", () => {
     }
     try {
       const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/defective/delete/${row.id}`
+        `${ApiUrl}/defective/delete/${row.id}`
       );
 
       $q.notify({

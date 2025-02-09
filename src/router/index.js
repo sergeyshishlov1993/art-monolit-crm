@@ -6,7 +6,7 @@ import { usePermissionStore } from "@/stores/PermissionStore";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL || "/"),
 
   routes: [
     {

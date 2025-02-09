@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
+import { ApiUrl } from "@/services/api";
 
 export const useWarehouse = defineStore("warehouse", () => {
   const $q = useQuasar();
@@ -125,14 +126,9 @@ export const useWarehouse = defineStore("warehouse", () => {
     rows.value[idx].isChanged = false;
 
     try {
-      const response = await axios.post(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/warehouse/create`,
-        {
-          item,
-        }
-      );
+      const response = await axios.post(`${ApiUrl}/warehouse/create`, {
+        item,
+      });
 
       $q.notify({
         message: `Успешно добавлен в склад ${item.name} ${item.length}X${item.width}X${item.thickness}!`,
@@ -154,14 +150,9 @@ export const useWarehouse = defineStore("warehouse", () => {
   }
   async function handleUpdate(row) {
     try {
-      const response = await axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/warehouse/update/${row.id}`,
-        {
-          item: row,
-        }
-      );
+      const response = await axios.put(`${ApiUrl}/warehouse/update/${row.id}`, {
+        item: row,
+      });
       console.log("Обновление строки", response);
       row.isChanged = false;
 
@@ -191,9 +182,7 @@ export const useWarehouse = defineStore("warehouse", () => {
     }
     try {
       const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/warehouse/delete/${row.id}`
+        `${ApiUrl}/warehouse/delete/${row.id}`
       );
 
       $q.notify({
@@ -216,15 +205,13 @@ export const useWarehouse = defineStore("warehouse", () => {
   }
   async function getWarehouseData(search) {
     try {
+      console.log("ApiUrl", ApiUrl);
       const params = {
         search: search,
       };
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/warehouse`,
-        {
-          params,
-        }
-      );
+      const response = await axios.get(`${ApiUrl}/warehouse`, {
+        params,
+      });
 
       rows.value = response.data.warehouse;
 

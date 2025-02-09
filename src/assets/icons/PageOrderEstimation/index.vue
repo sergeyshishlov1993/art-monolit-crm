@@ -5,6 +5,7 @@ import { useQuasar } from "quasar";
 import { useRoute, useRouter } from "vue-router";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import { ApiUrl } from "@/services/api";
 
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
 import UiTextH2 from "@/components/Ui/UiTextH2.vue";
@@ -347,11 +348,7 @@ function generatePDF() {
   pdfMake.createPdf(docDefinition).download(`${accountNumber.value}.pdf`);
 }
 async function getOrder() {
-  const response = await axios.get(
-    `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/pre-orders/${
-      route.query.id
-    }`
-  );
+  const response = await axios.get(`${ApiUrl}/pre-orders/${route.query.id}`);
 
   order.value = response.data.order;
 
@@ -395,9 +392,7 @@ async function saveOrder() {
     isProcessing.value = true;
     if (!isOrderCreated.value) {
       const response = await axios.post(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/pre-orders/create-preorder`,
+        `${ApiUrl}/pre-orders/create-preorder`,
         {
           preOrderData: order,
           preOrderMaterials: order.dataTable.rowsMaterials,
@@ -418,9 +413,7 @@ async function saveOrder() {
     } else {
       isProcessing.value = true;
       const response = await axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/pre-orders/update-preorder/${route.query.id}`,
+        `${ApiUrl}/pre-orders/update-preorder/${route.query.id}`,
         {
           preOrderData: order,
           preOrderMaterials: order.dataTable.rowsMaterials,

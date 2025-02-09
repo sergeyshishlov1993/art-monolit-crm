@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
+import { ApiUrl } from "@/services/api";
 
 export const useMaterials = defineStore("materials", () => {
   const $q = useQuasar();
@@ -123,11 +124,7 @@ export const useMaterials = defineStore("materials", () => {
 
   async function clearTableMaterials() {
     try {
-      const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/materials/clear`
-      );
+      const response = await axios.delete(`${ApiUrl}/materials/clear`);
 
       $q.notify({
         message: "Успешно очишена таблицы Материалы",
@@ -145,12 +142,9 @@ export const useMaterials = defineStore("materials", () => {
       const params = {
         search: search,
       };
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || process.env.VITE_API_URL}/materials`,
-        {
-          params,
-        }
-      );
+      const response = await axios.get(`${ApiUrl}/materials`, {
+        params,
+      });
 
       rows.value = response.data.materials;
 
@@ -174,14 +168,9 @@ export const useMaterials = defineStore("materials", () => {
   }
   async function handleAdd(item) {
     try {
-      const response = await axios.post(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/materials/create`,
-        {
-          materialsData: item,
-        }
-      );
+      const response = await axios.post(`${ApiUrl}/materials/create`, {
+        materialsData: item,
+      });
 
       $q.notify({
         message: "Успешно cоздано!",
@@ -203,14 +192,9 @@ export const useMaterials = defineStore("materials", () => {
   }
   async function handleUpdate(row) {
     try {
-      const response = await axios.put(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/materials/update/${row.id}`,
-        {
-          materialsData: row,
-        }
-      );
+      const response = await axios.put(`${ApiUrl}/materials/update/${row.id}`, {
+        materialsData: row,
+      });
       console.log("Обновление строки", response);
       row.isChanged = false;
 
@@ -240,9 +224,7 @@ export const useMaterials = defineStore("materials", () => {
     }
     try {
       const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/materials/delete/${row.id}`
+        `${ApiUrl}/materials/delete/${row.id}`
       );
 
       $q.notify({
@@ -266,9 +248,7 @@ export const useMaterials = defineStore("materials", () => {
   async function transferDataToArrival() {
     try {
       const response = await axios.post(
-        `${
-          import.meta.env.VITE_API_URL || process.env.VITE_API_URL
-        }/materials/transfer-to-arrival`
+        `${ApiUrl}/materials/transfer-to-arrival`
       );
 
       $q.notify({

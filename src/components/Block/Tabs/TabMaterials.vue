@@ -165,7 +165,7 @@ onMounted(() => {
     style="z-index: 1"
   />
 
-  <div class="q-pa-md">
+  <div class="q-pa-md" @click.stop="showModal = false">
     <q-btn
       color="green"
       icon="add"

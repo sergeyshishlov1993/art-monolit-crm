@@ -21,8 +21,8 @@ const pagination = ref({
 });
 
 const data = ref([
-  { id: crypto.randomUUID(), header: "На стеле" },
-  { id: crypto.randomUUID(), header: "На плите" },
+  { id: crypto.randomUUID(), header: "На стелі" },
+  { id: crypto.randomUUID(), header: "На плиті" },
   ...props.rows,
 ]);
 const tableKey = ref(0);
@@ -68,20 +68,20 @@ const columns = ref([
 ]);
 const options = [
   {
-    title: "На стеле",
+    title: "На стелі",
     items: [
-      { name: "Портрет", price: "0", parentTitle: "На стеле" },
-      { name: "Стихи", price: "0", parentTitle: "На стеле" },
-      { name: "Рисунок", price: "0", parentTitle: "На стеле" },
-      { name: "Реверс", price: "0", parentTitle: "На стеле" },
+      { name: "Портрет", price: "0", parentTitle: "На стелі" },
+      { name: "Вірші", price: "0", parentTitle: "На стелі" },
+      { name: "Малюнок", price: "0", parentTitle: "На стелі" },
+      { name: "Реверс", price: "0", parentTitle: "На стелі" },
     ],
   },
 
   {
-    title: "На плите",
+    title: "На плиті",
     items: [
-      { name: "Стихи", price: "0", parentTitle: "На плите" },
-      { name: "Рисунок", price: "0", parentTitle: "На плите" },
+      { name: "Вірші", price: "0", parentTitle: "На плиті" },
+      { name: "Малюнок", price: "0", parentTitle: "На плиті" },
     ],
   },
 ];
@@ -97,7 +97,7 @@ function addItem() {
     accountNumber: data.value.length + 1,
     name: "Выбрать",
     price: 0,
-    parentTitle: "На плите",
+    parentTitle: "На плиті",
   });
   data.value.push(newItem);
 

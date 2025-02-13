@@ -136,13 +136,14 @@ export const useOrders = defineStore("orders", () => {
     });
   }
 
-  async function deleteOrder(id, name, isDraft) {
+  async function deleteOrder(id, name, isDraft, isPublic) {
     try {
-      if (isDraft) {
+      if (isDraft || !isPublic) {
         rows.value = rows.value.filter((r) => r.id !== id);
 
         clearDraft();
       } else {
+        console.log("delete from server");
         const response = await axios.delete(
           `${ApiUrl}/orders/remove-order/${id}`
         );
@@ -189,8 +190,6 @@ export const useOrders = defineStore("orders", () => {
 
       totalOrders.value = response.data.totalOrders;
       totalSum.value = response.data.totalSum;
-
-      console.log("RESPONSE", response.data);
     } catch (error) {
       console.error("ERROR", error.response?.data || error.message);
     }

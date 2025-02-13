@@ -162,7 +162,8 @@
                       removeOrder(
                         props.row.id,
                         props.row.name,
-                        props.row.isDraft
+                        props.row.isDraft,
+                        props.row.isPublic
                       )
                     "
                   ></q-btn>
@@ -186,7 +187,16 @@
                 <p>Адрес: {{ props.row.address }}</p>
                 <p class="comment">Комментарий: {{ props.row.comment }}</p>
                 <p>Цена: {{ props.row.totalPrice }} грн</p>
-                <p>Дата создания: {{ props.row.createdAt }}</p>
+                <p>
+                  Дата создания:
+                  {{
+                    new Date(props.row.createdAt).toLocaleString("ru-RU", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  }}
+                </p>
               </div>
             </q-td>
           </q-tr>
@@ -258,18 +268,6 @@ const formattedTotalSum = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-// .action-btn {
-//   padding: 40px;
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-//   gap: 50px;
-// }
-
-// .count-order {
-//   margin-top: 50px;
-// }
-
 .table__wrapper {
   h1 {
     text-align: center;

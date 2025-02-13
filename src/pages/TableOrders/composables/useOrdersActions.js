@@ -26,8 +26,8 @@ export function useOrdersActions(canWrite) {
     );
   };
 
-  const removeOrder = async (id, name, isDraft) => {
-    await store.deleteOrder(id, name, isDraft);
+  const removeOrder = async (id, name, isDraft, isPublic) => {
+    await store.deleteOrder(id, name, isDraft, isPublic);
   };
 
   return {

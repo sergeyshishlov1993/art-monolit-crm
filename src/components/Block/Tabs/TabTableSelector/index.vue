@@ -15,6 +15,7 @@ const props = defineProps({
 
 const emit = defineEmits(["selectedValue", "create", "showModal"]);
 const showDialog = ref(false);
+const dropdownRef = ref(null);
 
 function openDialog() {
   showDialog.value = true;
@@ -84,7 +85,7 @@ const calculateDropdownPosition = (element) => {
     position: "absolute",
     top: `${rect.bottom + window.scrollY}px`,
     left: `${rect.left + window.scrollX}px`,
-    width: `250px`,
+    width: `240px`,
     height: '300px',
     zIndex: 1000,
   };
@@ -96,6 +97,21 @@ const toggleOptions = (event) => {
     calculateDropdownPosition(event.currentTarget);
   }
 };
+
+
+const handleClickOutside = (event) => {
+  if (showOptions.value && dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+    showOptions.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <template>
@@ -107,6 +123,7 @@ const toggleOptions = (event) => {
     <teleport to="body">
       <div
         v-if="showOptions"
+        ref="dropdownRef"
         :class="$style.list"
         :style="dropdownStyles"
         @click.stop
@@ -250,8 +267,8 @@ const toggleOptions = (event) => {
 .options {
   cursor: pointer !important;
   padding: 8px !important;
-  font-size: 18px !important;
-  font-weight: 600 !important
+  font-size: 16px !important;
+  font-weight: 500 !important
 }
 
 .options:hover {

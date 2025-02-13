@@ -1,12 +1,5 @@
 <script setup>
-import {
-  ref,
-  reactive,
-  computed,
-  onMounted,
-  onBeforeMount,
-  watchEffect,
-} from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useOrders } from "@/stores/Orders";
@@ -88,6 +81,7 @@ const dataTable = reactive({
 
 const isPublic = ref(false);
 const order = ref({});
+const orderNumber = ref();
 const selectedSource = ref("Магазин");
 const source = ["Google", "Facebook", "Instagram", "Рекомендация", "Магазин"];
 
@@ -153,7 +147,8 @@ const { generatePDF } = usePDFGenerator(
   totalPrice,
   prepayment,
   sale,
-  finalPrice
+  finalPrice,
+  orderNumber
 );
 
 const activeTabComponent = computed(() => {
@@ -187,7 +182,7 @@ const activeTabProps = computed(() => {
   }
 });
 
-onBeforeMount(async () => {
+onMounted(async () => {
   userStore.loadUserFromStorage();
 
   if (isOrderCreated.value) {
@@ -239,6 +234,7 @@ async function distributeData() {
   prepayment.value = order.value.prepayment;
   sale.value = order.value.sale;
   totalPrice.value = +order.value.totalPrice;
+  orderNumber.value = order.value.order_number;
 
   const { address, comment, first_name, second_name, name, phone, isPublic } =
     order.value;
@@ -271,7 +267,11 @@ async function distributeData() {
   </q-breadcrumbs>
 
   <div class="table__wrapper">
-    <UiTextH1>Заказ №{{ accountNumber }}</UiTextH1>
+    <UiTextH1
+      >Заказ №{{
+        orderNumber ? String(orderNumber).toUpperCase() : "Новый"
+      }}</UiTextH1
+    >
 
     <div>
       <UiTextH2 class="table__title">Название продукта</UiTextH2>

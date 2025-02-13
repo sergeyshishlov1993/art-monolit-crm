@@ -29,6 +29,7 @@
         <template v-slot:body-cell-role="props">
           <q-td :props="props">
             <q-select
+              v-if="props.row.name !== 'Владелец'"
               v-model="selectedRoles[props.row.id]"
               :options="storeOwner.optionsRole"
               outlined
@@ -45,6 +46,7 @@
         <template v-slot:body-cell-address="props">
           <q-td :props="props">
             <q-select
+              v-if="props.row.name !== 'Владелец'"
               v-model="selectedStores[props.row.id]"
               :options="storeOwner.storeOptions"
               outlined

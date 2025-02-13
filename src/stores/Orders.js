@@ -11,9 +11,17 @@ export const useOrders = defineStore("orders", () => {
     {
       name: "accountNumber",
       required: true,
-      label: "Номер Заказа",
+      label: "Номер",
       align: "rigth",
       field: "accountNumber",
+      sortable: true,
+    },
+    {
+      name: "order_number",
+      required: true,
+      label: "Номер заказа",
+      align: "rigth",
+      field: "order_number",
       sortable: true,
     },
     {
@@ -61,10 +69,10 @@ export const useOrders = defineStore("orders", () => {
     },
 
     {
-      name: "store",
+      name: "storeAddress",
       label: "Магазин",
       align: "left",
-      field: "store",
+      field: "storeAddress",
     },
     {
       name: "action",
@@ -93,6 +101,10 @@ export const useOrders = defineStore("orders", () => {
     sortBy: "createdAt",
     descending: true,
   });
+
+  const totalOrders = ref(0);
+  const totalSum = ref(0);
+
   async function createOrder(
     orderData,
     deads,
@@ -157,6 +169,33 @@ export const useOrders = defineStore("orders", () => {
     }
   }
 
+  async function calculateOrders(
+    startDate = null,
+    endDate = null,
+    storeAddress = null,
+    source = null
+  ) {
+    const params = {
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      storeAddress: storeAddress,
+      source: source,
+    };
+
+    try {
+      const response = await axios.get(`${ApiUrl}/orders/calc-orders`, {
+        params,
+      });
+
+      totalOrders.value = response.data.totalOrders;
+      totalSum.value = response.data.totalSum;
+
+      console.log("RESPONSE", response.data);
+    } catch (error) {
+      console.error("ERROR", error.response?.data || error.message);
+    }
+  }
+
   async function changeStatusOrder(id, statuses, name) {
     try {
       const response = await axios.put(`${ApiUrl}/orders/change-status-order`, {
@@ -183,7 +222,8 @@ export const useOrders = defineStore("orders", () => {
     search = null,
     page = pagination.value.page,
     per_page = pagination.value.rowsPerPage,
-    storeAddress = null
+    storeAddress = null,
+    source = null
   ) {
     try {
       const params = {
@@ -194,6 +234,7 @@ export const useOrders = defineStore("orders", () => {
         page: page || 1,
         per_page: per_page || 10,
         storeAddress: storeAddress,
+        source: source,
       };
 
       const response = await axios.get(`${ApiUrl}/orders`, {
@@ -357,6 +398,7 @@ export const useOrders = defineStore("orders", () => {
 
   return {
     addRow,
+    calculateOrders,
     columns,
     createOrder,
     changeStatusOrder,
@@ -372,5 +414,7 @@ export const useOrders = defineStore("orders", () => {
     getSavedDraft,
     clearDraft,
     oneOrder,
+    totalOrders,
+    totalSum,
   };
 });

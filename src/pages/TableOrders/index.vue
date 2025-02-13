@@ -2,76 +2,30 @@
   <div class="table__wrapper">
     <ui-text-h1>Заказы</ui-text-h1>
 
-    <q-expansion-item label="Фильтры" icon="filter_list" expand-separator>
-      <div class="q-pa-md">
-        <div class="settings">
-          <div>
-            <q-input
-              class="calendar"
-              v-model="formattedDateRange"
-              outlined
-              label="Выберите период"
-              readonly
-              @focus="showCalendar = true"
-            >
-              <template v-slot:prepend>
-                <q-icon
-                  name="event"
-                  class="cursor-pointer"
-                  @click="showCalendar = true"
-                />
-              </template>
-            </q-input>
-
-            <q-popup-proxy
-              v-model="showCalendar"
-              transition-show="scale"
-              transition-hide="scale"
-            >
-              <q-date
-                v-model="selectedDateRange"
-                range
-                mask="YYYY-MM-DD"
-                default-year-month="2025/01"
-                @update:model-value="updateFormattedDateRange"
-              />
-            </q-popup-proxy>
-          </div>
-
-          <q-select
-            v-model="selectedStatus"
-            :options="statusOptions"
-            class="select-filter"
-            @update:model-value="filterStatus(selectedStatus)"
-          ></q-select>
-
-          <q-select
-            v-if="storeUser.user && storeUser.user.address === 'Все магазины'"
-            v-model="selectedStores"
-            :options="storeOwner.storeOptions"
-            outlined
-            dense
-            emit-value
-            map-options
-            option-value="id"
-            option-label="name"
-            class="q-mt-sm"
-            @update:model-value="handleStoreChange"
-          />
-
+    <div class="filter">
+      <div>
+        <q-toolbar>
           <q-btn
+            dense
+            flat
             round
-            color="deep-orange"
-            glossy
-            text-color="white"
-            icon="clear"
-            @click="resetFilters"
-          >
-            <q-tooltip>Скинуть фильтры</q-tooltip>
-          </q-btn>
-        </div>
+            icon="filter_list"
+            @click="showFilters = true"
+          />
+          <q-toolbar-title>Фильтрация заказов</q-toolbar-title>
+        </q-toolbar>
       </div>
-    </q-expansion-item>
+
+      <FilterDialog
+        v-model:showFilters="showFilters"
+        :totalOrders="store.totalOrders"
+        :formattedTotalSum="formattedTotalSum"
+        :storeOptions="storeOwner.storeOptions"
+        :sourceOptions="source"
+        :statusOptions="statusOptions"
+        :isAllStores="storeUser.user?.address === 'Все магазины'"
+      />
+    </div>
 
     <div class="q-pa-md">
       <div class="header">
@@ -103,8 +57,9 @@
         class="my-sticky-header-table"
         flat
         bordered
+        dense
         :rows="store.rows"
-        :columns="store.columns"
+        :columns="filteredColumns"
         row-key="accountNumber"
         v-model:pagination="store.pagination"
         @request="onRequest"
@@ -198,12 +153,13 @@
               <template v-else-if="col.name === 'action'">
                 <div @click.stop>
                   <q-btn
+                    v-if="permissionStore.isOwner == 'true'"
                     color="red"
                     icon="delete"
                     round
                     dense
                     @click="
-                      store.deleteOrder(
+                      removeOrder(
                         props.row.id,
                         props.row.name,
                         props.row.isDraft
@@ -241,6 +197,7 @@
 </template>
 
 <script setup>
+import { computed, ref } from "vue";
 import { useUserStore } from "@/stores/User";
 import { usePermissionStore } from "@/stores/PermissionStore";
 import { useOrders } from "@/stores/Orders";
@@ -251,10 +208,15 @@ import { useOrdersStoreInit } from "./composables/useOrdersStoreInit";
 import { useOrdersStatus } from "./composables/useOrdersStatus";
 import { useOwner } from "@/stores/Owner";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
+import UiTextH3 from "@/components/Ui/UiTextH3.vue";
 
+import FilterDialog from "./components/FilterDialog.vue";
+
+const source = ["Google", "Facebook", "Instagram", "Рекомендация", "Магазин"];
 const store = useOrders();
 const storeOwner = useOwner();
 const storeUser = useUserStore();
+const showFilters = ref(false);
 const permissionStore = usePermissionStore();
 const canWrite = permissionStore.hasPermission("can_write_orders");
 
@@ -271,19 +233,43 @@ const {
   handlerSearch,
   resetFilters,
   showCalendar,
+  selectedSource,
+  selectSource,
+  handlerCalculationOrder,
 } = useOrdersFilters();
 
 const { addItem, openOrder, removeOrder } = useOrdersActions(canWrite);
-const { onRequest } = useOrdersPagination();
+const { onRequest } = useOrdersPagination(storeUser, selectedStores);
 const { getStatusClass, lastActiveStatus, updateStatuses } = useOrdersStatus(
   statusOptions,
   store
 );
 
 useOrdersStoreInit();
+
+const filteredColumns = computed(() =>
+  permissionStore.isOwner == "true"
+    ? store.columns
+    : store.columns.filter((col) => col.name !== "action")
+);
+const formattedTotalSum = computed(() => {
+  return new Intl.NumberFormat("ru-RU").format(store.totalSum) + " грн";
+});
 </script>
 
 <style lang="scss" scoped>
+// .action-btn {
+//   padding: 40px;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   gap: 50px;
+// }
+
+// .count-order {
+//   margin-top: 50px;
+// }
+
 .table__wrapper {
   h1 {
     text-align: center;
@@ -297,12 +283,17 @@ useOrdersStoreInit();
 
 .settings {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   gap: 30px;
 
+  &-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
   .calendar {
-    width: 450px;
+    width: 600px;
   }
 
   .select-filter {
@@ -326,6 +317,12 @@ useOrdersStoreInit();
   width: 100%;
   white-space: normal;
   overflow: visible;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .status-new {

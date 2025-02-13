@@ -52,7 +52,7 @@ const name = ref("");
 const password = ref("");
 
 const validateUser = (val) =>
-  (!!val && val.length > 3) || "Имя не может быть пустым или меньше 3 символов";
+  (!!val && val.length > 2) || "Имя не может быть пустым или меньше 2 символов";
 
 const validatePassword = (val) => !!val || "Пароль не может быть пустым";
 

@@ -11,6 +11,8 @@ export function useOrdersFilters() {
   const showCalendar = ref(false);
   const store = useOrders();
   const storeOwner = useOwner();
+  const selectedSource = ref("");
+  const storeAdress = ref("");
 
   const statusOptions = [
     { label: "Новый", value: "new" },
@@ -42,6 +44,11 @@ export function useOrdersFilters() {
         selectedDateRange.value.from,
         selectedDateRange.value.to
       );
+
+      await store.calculateOrders(
+        selectedDateRange.value.from,
+        selectedDateRange.value.to
+      );
     } else {
       formattedDateRange.value = "";
     }
@@ -52,8 +59,17 @@ export function useOrdersFilters() {
     await store.getOrders(status.value);
   };
 
+  const handlerCalculationOrder = async () => {
+    await store.calculateOrders(
+      selectedDateRange.value.from,
+      selectedDateRange.value.to,
+      storeAdress.value ? storeAdress.value.name : null,
+      selectedSource.value
+    );
+  };
+
   const handleStoreChange = async (storeId) => {
-    const storeAdress = storeOwner.storeOptions.find((s) => s.id === storeId);
+    storeAdress.value = storeOwner.storeOptions.find((s) => s.id === storeId);
     await store.getOrders(
       null,
       null,
@@ -61,7 +77,13 @@ export function useOrdersFilters() {
       null,
       null,
       null,
-      storeAdress ? storeAdress.name : null
+      storeAdress.value ? storeAdress.value.name : null
+    );
+
+    await store.calculateOrders(
+      null,
+      null,
+      storeAdress.value ? storeAdress.value.name : null
     );
   };
 
@@ -70,12 +92,33 @@ export function useOrdersFilters() {
   };
 
   const resetFilters = async () => {
-    selectedDateRange.value = { from: "2025-01-01", to: "2025-02-01" };
-    formattedDateRange.value = "01.01.2025 - 01.02.2025";
+    selectedDateRange.value = { from: "", to: "" };
+    formattedDateRange.value = "";
     selectedStatus.value = "Новый";
     searchQuery.value = "";
+    storeAdress.value = "";
+    selectedSource.value = "";
 
+    store.totalOrders = 0;
+    store.totalSum = 0;
     await store.getOrders();
+  };
+
+  const selectSource = async (select) => {
+    selectedSource.value = select;
+
+    await store.getOrders(
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      selectedSource.value
+    );
+
+    await store.calculateOrders(null, null, null, selectedSource.value);
   };
 
   return {
@@ -85,12 +128,14 @@ export function useOrdersFilters() {
     selectedStatus,
     searchQuery,
     statusOptions,
-    showCalendar,
     updateFormattedDateRange,
     filterStatus,
     handleStoreChange,
     handlerSearch,
     resetFilters,
     formatDate,
+    selectedSource,
+    selectSource,
+    handlerCalculationOrder,
   };
 }

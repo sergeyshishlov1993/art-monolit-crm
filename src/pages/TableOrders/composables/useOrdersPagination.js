@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { useOrders } from "@/stores/Orders";
 
-export function useOrdersPagination() {
+export function useOrdersPagination(storeUser, selectedStores) {
   const store = useOrders();
   const loading = ref(false);
 
@@ -14,7 +14,7 @@ export function useOrdersPagination() {
         null,
         null,
         null,
-        null,
+        selectedStores.value || storeUser.user.address,
         page || 1,
         rowsPerPage || 10
       );

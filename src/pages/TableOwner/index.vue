@@ -13,9 +13,7 @@
       >
     </div>
 
-    <keep-alive>
-      <component :is="activeTabComponent" />
-    </keep-alive>
+    <component :is="activeTabComponent" />
   </div>
 </template>
 

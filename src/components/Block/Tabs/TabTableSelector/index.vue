@@ -22,8 +22,6 @@ function openDialog() {
   showOptions.value = false;
 }
 
-// const selected = ref(props.selected || null);
-
 const selected = computed(() => props.selected);
 const search = ref("");
 const showOptions = ref(false);
@@ -86,7 +84,8 @@ const calculateDropdownPosition = (element) => {
     position: "absolute",
     top: `${rect.bottom + window.scrollY}px`,
     left: `${rect.left + window.scrollX}px`,
-    width: `200px`,
+    width: `250px`,
+    height: '300px',
     zIndex: 1000,
   };
 };
@@ -129,7 +128,7 @@ const toggleOptions = (event) => {
         />
 
         <div v-if="props.tab == 'rowsMaterials'">
-          <UiTextH6
+          <UiTextH5 class="li"
             v-for="option in filteredOptions"
             :key="option.name"
             @click="handleSelect(option)"
@@ -137,7 +136,7 @@ const toggleOptions = (event) => {
           >
             <span> {{ option.title }}</span>
             {{ option.name }}
-          </UiTextH6>
+          </UiTextH5>
         </div>
 
         <ul>
@@ -190,7 +189,7 @@ const toggleOptions = (event) => {
     border: 1px solid #ccc;
     border-radius: 4px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 10px;
@@ -232,7 +231,7 @@ const toggleOptions = (event) => {
   border: 1px solid #ccc;
   border-radius: 4px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
+  max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 10px;
@@ -251,10 +250,13 @@ const toggleOptions = (event) => {
 .options {
   cursor: pointer !important;
   padding: 8px !important;
-  font-size: 14px !important;
+  font-size: 18px !important;
+  font-weight: 600 !important
 }
 
 .options:hover {
   background-color: #f0f0f0;
 }
-</style>
+
+
+</style

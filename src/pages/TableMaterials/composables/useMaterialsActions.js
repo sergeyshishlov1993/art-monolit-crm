@@ -1,14 +1,9 @@
 import { ref } from "vue";
-import debounce from "lodash/debounce";
 import { useMaterials } from "@/stores/Materials";
 
 export function useMaterialsActions() {
   const storeMaterials = useMaterials();
   const isProcessing = ref(false);
-
-  const debouncedUpdate = debounce(async (row) => {
-    await handleUpdate(row);
-  }, 3000);
 
   async function handleAdd(item) {
     storeMaterials.handleAdd(item);
@@ -41,9 +36,6 @@ export function useMaterialsActions() {
 
   function handlerFocusInput(row) {
     row.isChanged = true;
-    if (!row.isCreated) {
-      debouncedUpdate(row);
-    }
   }
 
   async function clearTableMaterials() {

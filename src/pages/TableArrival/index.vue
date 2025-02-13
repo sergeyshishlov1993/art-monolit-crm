@@ -120,7 +120,7 @@ const { searchQuery, fetchSearchResults } = useArrivalFilters();
     <div class="button-group">
       <q-btn
         :disable="!storeArrival.rows.length"
-        label="Внести приход"
+        label="Внести в склад"
         icon="add_circle"
         color="green"
         push

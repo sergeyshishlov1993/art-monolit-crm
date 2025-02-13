@@ -9,14 +9,17 @@ export function usePDFGenerator(
   totalPrice,
   prepayment,
   sale,
-  finalPrice
+  finalPrice,
+  orderNumber
 ) {
   const generatePDF = () => {
     const rowsMaterials = ref([
-      { id: crypto.randomUUID(), header: "На стеле" },
-      { id: crypto.randomUUID(), header: "На плите" },
+      { id: crypto.randomUUID(), header: "На стелі" },
+      { id: crypto.randomUUID(), header: "На плиті" },
       ...dataTable.rowsWorks,
     ]);
+
+    console.log("dataTable", dataTable);
 
     const sortedRows = computed(() => {
       const headers = rowsMaterials.value.filter((row) => row.header);
@@ -37,13 +40,13 @@ export function usePDFGenerator(
         {
           stack: [
             {
-              text: "Запорожье",
+              text: "Запоріжжя",
               alignment: "left",
               fontSize: 10,
               margin: [0, 0, 0, 5],
             },
             {
-              text: "вул Космическая 63",
+              text: "вул Космічна 63",
               alignment: "left",
               fontSize: 10,
               margin: [0, 0, 0, 5],
@@ -52,7 +55,11 @@ export function usePDFGenerator(
           ],
           width: "auto",
         },
-        { text: "Заказ №1", style: "header", alignment: "center" },
+        {
+          text: `Замовлення ${String(orderNumber.value).toUpperCase()}`,
+          style: "header",
+          alignment: "center",
+        },
 
         {
           text: `${dataTable.customer.name || "Без назви"}`,
@@ -62,15 +69,15 @@ export function usePDFGenerator(
 
         {
           columns: [
-            { text: "Заказчик", style: "subheader", margin: [0, 0, 0, 5] },
+            { text: "Замовник", style: "subheader", margin: [0, 0, 0, 5] },
           ],
         },
         {
-          text: `Имя: ${dataTable.customer.first_name || "Не указано"}`,
+          text: `Імʼя: ${dataTable.customer.first_name || "Не указано"}`,
           margin: [0, 0, 0, 5],
         },
         {
-          text: `Фамилия: ${dataTable.customer.second_name || "Не указано"}`,
+          text: `Прізвище: ${dataTable.customer.second_name || "Не указано"}`,
           margin: [0, 0, 0, 5],
         },
         {
@@ -78,15 +85,17 @@ export function usePDFGenerator(
           margin: [0, 0, 0, 5],
         },
         {
-          text: `Адрес доставки: ${dataTable.customer.address || "Не указано"}`,
+          text: `Адреса доставки: ${
+            dataTable.customer.address || "Не указано"
+          }`,
           margin: [0, 0, 0, 5],
         },
         {
-          text: `Примечание: ${dataTable.customer.comment || "Нет"}`,
+          text: `Коментар: ${dataTable.customer.comment || "Нет"}`,
           margin: [0, 0, 0, 5],
         },
 
-        { text: "Умерший", style: "subheader" },
+        { text: "Померлий", style: "subheader" },
         {
           table: {
             headerRows: 1,
@@ -94,11 +103,11 @@ export function usePDFGenerator(
             body: [
               [
                 "Номер",
-                "Имя",
-                "Фамилия",
-                "Отчество",
-                "Дата рождения",
-                "Дата смерти",
+                "Імʼя",
+                "Прізвище",
+                "По-батькові",
+                "Дата народження",
+                "Дата смерті",
               ],
               ...dataTable.rowsDead.map((row, index) => [
                 index + 1,
@@ -113,16 +122,16 @@ export function usePDFGenerator(
           layout: "grid",
         },
 
-        { text: "Материалы", style: "subheader" },
+        { text: "Матеріали", style: "subheader" },
         {
           table: {
             headerRows: 1,
             widths: ["auto", "*", "auto"],
             body: [
-              ["Номер", "Название", "Цена"],
+              ["Номер", "Назва", "Ціна"],
               ...dataTable.rowsMaterials.map((row, index) => [
                 index + 1,
-                row.name || "Не указано",
+                row.name || "Не вказано",
                 row.price || "0",
               ]),
             ],
@@ -130,16 +139,16 @@ export function usePDFGenerator(
           layout: "grid",
         },
 
-        { text: "Услуги", style: "subheader" },
+        { text: "Послуги", style: "subheader" },
         {
           table: {
             headerRows: 1,
             widths: ["auto", "*", "auto"],
             body: [
-              ["Номер", "Название", "Цена"],
+              ["Номер", "Назва", "Ціна"],
               ...dataTable.rowsServices.map((row, index) => [
                 index + 1,
-                row.name || "Не указано",
+                row.name || "Не вказано",
                 row.price || "0",
               ]),
             ],
@@ -147,13 +156,13 @@ export function usePDFGenerator(
           layout: "grid",
         },
 
-        { text: "Виды работ", style: "subheader" },
+        { text: "Види робіт", style: "subheader" },
         {
           table: {
             headerRows: 1,
             widths: ["auto", "*", "auto"],
             body: [
-              ["Номер", "Название", "Цена"],
+              ["Номер", "Назва", "Ціна"],
               ...sortedRows.value.flatMap((row, index, array) => {
                 if (row.header) {
                   return [
@@ -173,7 +182,7 @@ export function usePDFGenerator(
                     .slice(0, index)
                     .filter((item) => !item.header).length;
                   return [
-                    [rowIndex + 1, row.name || "Не указано", row.price || "0"],
+                    [rowIndex + 1, row.name || "Не вказано", row.price || "0"],
                   ];
                 }
               }),
@@ -182,14 +191,14 @@ export function usePDFGenerator(
           layout: "grid",
         },
 
-        { text: "Финансовая информация", style: "subheader" },
+        { text: "Фінансова інформація", style: "subheader" },
         {
           table: {
             headerRows: 0,
             widths: ["*", "*"],
             body: [
               [
-                { text: "Общая сумма", alignment: "left" },
+                { text: "Загальна сума", alignment: "left" },
                 {
                   text:
                     (Number(totalPrice.value) || 0).toLocaleString("ru-RU") +
@@ -198,7 +207,7 @@ export function usePDFGenerator(
                 },
               ],
               [
-                { text: "Скидка", alignment: "left" },
+                { text: "Знижка", alignment: "left" },
                 {
                   text:
                     "-" +
@@ -208,7 +217,7 @@ export function usePDFGenerator(
                 },
               ],
               [
-                { text: "Предоплата", alignment: "left" },
+                { text: "Передплата", alignment: "left" },
                 {
                   text:
                     (Number(prepayment.value) || 0).toLocaleString("ru-RU") +
@@ -218,7 +227,7 @@ export function usePDFGenerator(
               ],
               [
                 {
-                  text: "Итоговая сумма",
+                  text: "Підсумкова сума",
                   alignment: "left",
                   bold: true,
                   fontSize: 12,
@@ -255,7 +264,9 @@ export function usePDFGenerator(
       },
     };
 
-    pdfMake.createPdf(docDefinition).download(`${accountNumber.value}.pdf`);
+    pdfMake
+      .createPdf(docDefinition)
+      .download(`${String(orderNumber.value).toUpperCase()}.pdf`);
   };
 
   return { generatePDF };

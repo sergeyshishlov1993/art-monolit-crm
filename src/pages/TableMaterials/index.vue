@@ -7,8 +7,13 @@ import { useMaterialsTable } from "./composables/useMaterialsTable";
 import { useMaterialsStoreInit } from "./composables/useMaterialsStoreInit";
 
 const { searchQuery, fetchSearchResults } = useMaterialsFilters();
-const { handleAdd, allowOnlyNumbers, handlerFocusInput, clearTableMaterials } =
-  useMaterialsActions();
+const {
+  handleAdd,
+  allowOnlyNumbers,
+  handlerFocusInput,
+  handleUpdate,
+  clearTableMaterials,
+} = useMaterialsActions();
 const { generatePDF } = useMaterialsPDF();
 const { storeMaterials, pagination } = useMaterialsTable();
 
@@ -95,6 +100,20 @@ useMaterialsStoreInit();
             <div class="actions-btn">
               <q-btn
                 :disable="!props.row.isChanged"
+                icon="sync"
+                round
+                glossy
+                color="teal"
+                dense
+                ripple
+                @click="handleUpdate(props.row)"
+                v-if="!props.row.isCreated"
+              >
+                <q-tooltip>Изменить</q-tooltip>
+              </q-btn>
+
+              <q-btn
+                :disable="!props.row.isChanged"
                 round
                 color="primary"
                 icon="edit"
@@ -136,8 +155,8 @@ useMaterialsStoreInit();
 
       <q-btn
         :disable="!storeMaterials.rows.length"
-        label="Сохранить"
-        icon="save"
+        label="Внести в приход"
+        icon="add_circle"
         color="primary"
         class="q-mr-sm"
         @click="storeMaterials.transferDataToArrival()"

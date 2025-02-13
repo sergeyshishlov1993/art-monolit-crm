@@ -1,12 +1,7 @@
-import debounce from "lodash/debounce";
 import { useDefective } from "@/stores/Defective";
 
 export function useDefectiveActions() {
   const storeDefective = useDefective();
-
-  const debouncedUpdateQuantity = debounce(async (row) => {
-    await handleUpdate(row);
-  }, 1500);
 
   async function handleUpdate(row) {
     try {
@@ -19,7 +14,6 @@ export function useDefectiveActions() {
 
   function handlerFocusInput(row) {
     row.isChanged = true;
-    debouncedUpdateQuantity(row);
   }
 
   return {

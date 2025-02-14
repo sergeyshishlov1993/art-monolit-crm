@@ -142,6 +142,7 @@ onBeforeUnmount(() => {
           icon="add"
           color="primary"
           @click="openDialog"
+          :class=" {'button-toggle': props.tab !== 'rowsMaterials'}"
         />
 
         <div v-if="props.tab == 'rowsMaterials'">
@@ -235,6 +236,10 @@ onBeforeUnmount(() => {
 .title-list {
   font-size: 16px;
   font-weight: 600;
+}
+
+.button-toggle {
+  margin-top: 25px;
 }
 </style>
 

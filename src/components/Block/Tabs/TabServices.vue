@@ -46,9 +46,9 @@ const data = props.rows;
 const idItems = ref(0);
 const options = [
   { name: "Доставка", price: "0" },
-  { name: "Установка", price: "0" },
-  { name: "Добавление", price: "0" },
-  { name: "Изменения", price: "0" },
+  { name: "Встановлення", price: "0" },
+  { name: "Додавання", price: "0" },
+  { name: "Зміни", price: "0" },
 ];
 const pagination = ref({
   sortBy: "desc",

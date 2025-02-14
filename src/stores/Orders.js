@@ -326,6 +326,7 @@ export const useOrders = defineStore("orders", () => {
       store: "КС",
       action: "",
       isDraft: false,
+      isPublic: false,
       date: getCurrentDate(),
     });
   }

@@ -186,7 +186,11 @@
                 <p>Телефон: {{ props.row.phone }}</p>
                 <p>Адрес: {{ props.row.address }}</p>
                 <p class="comment">Комментарий: {{ props.row.comment }}</p>
-                <p>Цена: {{ props.row.totalPrice }} грн</p>
+                <p>
+                  Цена:
+                  {{ parseFloat(props.row.totalPrice).toLocaleString("ru-RU") }}
+                  грн
+                </p>
                 <p>
                   Дата создания:
                   {{
@@ -207,7 +211,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { useUserStore } from "@/stores/User";
 import { usePermissionStore } from "@/stores/PermissionStore";
 import { useOrders } from "@/stores/Orders";
@@ -264,6 +268,10 @@ const filteredColumns = computed(() =>
 );
 const formattedTotalSum = computed(() => {
   return new Intl.NumberFormat("ru-RU").format(store.totalSum) + " грн";
+});
+
+watchEffect(() => {
+  store.rows = store.rows.filter((el) => el.isPublic === true);
 });
 </script>
 

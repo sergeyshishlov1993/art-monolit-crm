@@ -19,8 +19,6 @@ export function usePDFGenerator(
       ...dataTable.rowsWorks,
     ]);
 
-    console.log("dataTable", dataTable);
-
     const sortedRows = computed(() => {
       const headers = rowsMaterials.value.filter((row) => row.header);
       const result = reactive([]);

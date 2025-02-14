@@ -143,7 +143,6 @@ export const useOrders = defineStore("orders", () => {
 
         clearDraft();
       } else {
-        console.log("delete from server");
         const response = await axios.delete(
           `${ApiUrl}/orders/remove-order/${id}`
         );

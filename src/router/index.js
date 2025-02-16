@@ -108,7 +108,7 @@ router.beforeEach((to, from, next) => {
   const permissionStore = usePermissionStore();
 
   if (to.name === "Hello") {
-    if (permissionStore.isOwner) {
+    if (permissionStore.isOwner == "true") {
       next("/owner");
     } else if (permissionStore.permissions.length > 0) {
       next();
@@ -119,7 +119,7 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.path === "/owner") {
-    if (permissionStore.isOwner) {
+    if (permissionStore.isOwner == "true") {
       next();
     } else {
       next("/");

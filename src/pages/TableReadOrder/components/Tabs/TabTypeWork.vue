@@ -20,8 +20,8 @@ const columns = ref([
   },
 ]);
 const data = ref([
-  { id: crypto.randomUUID(), header: "На стеле" },
-  { id: crypto.randomUUID(), header: "На плите" },
+  { id: crypto.randomUUID(), header: "На стелі" },
+  { id: crypto.randomUUID(), header: "На плиті" },
   ...props.rows,
 ]);
 

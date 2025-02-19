@@ -124,12 +124,13 @@ export function usePDFGenerator(
         {
           table: {
             headerRows: 1,
-            widths: ["auto", "*", "auto"],
+            widths: ["auto", "*", "auto", "auto"],
             body: [
-              ["Номер", "Назва", "Ціна"],
+              ["Номер", "Назва", "Кількість", "Ціна(шт)"],
               ...dataTable.rowsMaterials.map((row, index) => [
                 index + 1,
                 row.name || "Не вказано",
+                row.quantity || "0",
                 row.price || "0",
               ]),
             ],

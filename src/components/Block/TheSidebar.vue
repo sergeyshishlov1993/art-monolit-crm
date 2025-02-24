@@ -66,8 +66,7 @@ async function logoutUser() {
 <template>
   <aside
     :class="['sidebar', { collapsed: isCollapsed }]"
-    @mouseenter="handleMouseEnter"
-    @mouseleave="handleMouseLeave"
+    @click="isCollapsed = !isCollapsed"
   >
     <div class="logo">
       <router-link to="/">

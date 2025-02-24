@@ -46,9 +46,11 @@ const data = props.rows;
 const idItems = ref(0);
 const options = [
   { name: "Доставка", price: "0" },
-  { name: "Встановлення", price: "0" },
-  { name: "Додавання", price: "0" },
-  { name: "Зміни", price: "0" },
+  { name: "Монтаж", price: "0" },
+  { name: "Демонтаж", price: "0" },
+  { name: "Демонтаж(Інще)", price: "0" },
+  { name: "Бетонування(1,5 Х 2,20 Х 0,15)", price: "0" },
+  { name: "Бетонування(2,20 Х 2,20 Х 0,15)", price: "0" },
 ];
 const pagination = ref({
   sortBy: "desc",

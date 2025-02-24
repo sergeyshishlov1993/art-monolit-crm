@@ -78,7 +78,7 @@
           <q-select
             v-if="props.tab === 'typeWork'"
             v-model="newItem.parentTitle"
-            :options="['На стеле', 'На плите']"
+            :options="['На стелі', 'На плиті']"
             label="Расположение"
             outlined
             class="q-mt-md"
@@ -157,7 +157,6 @@ const resetForm = () => {
   box-sizing: border-box;
 }
 
-/* Some basic CSS overrides */
 body {
   line-height: 1.5;
   min-height: 100vh;

@@ -12,7 +12,15 @@ export function useOrdersFilters() {
   const store = useOrders();
   const storeOwner = useOwner();
   const selectedSource = ref("");
-  const storeAdress = ref("");
+
+  const user = ref(null);
+
+  if (typeof window !== "undefined") {
+    const userData = localStorage.getItem("user");
+    user.value = userData ? JSON.parse(userData) : null;
+  }
+
+  const storeAdress = ref(user.value?.address || "");
 
   const statusOptions = [
     { label: "Новый", value: "new" },
@@ -42,7 +50,8 @@ export function useOrdersFilters() {
       await store.getOrders(
         null,
         selectedDateRange.value.from,
-        selectedDateRange.value.to
+        selectedDateRange.value.to,
+        storeAdress.value ? storeAdress.value.name : null
       );
 
       await store.calculateOrders(
@@ -63,7 +72,7 @@ export function useOrdersFilters() {
     await store.calculateOrders(
       selectedDateRange.value.from,
       selectedDateRange.value.to,
-      storeAdress.value ? storeAdress.value.name : null,
+      storeAdress.value,
       selectedSource.value
     );
   };
@@ -77,18 +86,26 @@ export function useOrdersFilters() {
       null,
       null,
       null,
-      storeAdress.value ? storeAdress.value.name : null
+      storeAdress.value
     );
 
-    await store.calculateOrders(
-      null,
-      null,
-      storeAdress.value ? storeAdress.value.name : null
-    );
+    await store.calculateOrders(null, null, storeAdress.value);
+
+    console.log("calculateOrders", storeAdress.value);
   };
 
   const handlerSearch = async () => {
-    await store.getOrders(null, null, null, searchQuery.value);
+    await store.getOrders(
+      null,
+      null,
+      null,
+      searchQuery.value,
+      null,
+      null,
+      storeAdress.value
+    );
+
+    console.log("search", storeAdress.value);
   };
 
   const resetFilters = async () => {

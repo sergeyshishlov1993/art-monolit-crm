@@ -71,6 +71,10 @@ const options = [
     title: "На стелі",
     items: [
       { name: "Портрет", price: "0", parentTitle: "На стелі" },
+      { name: "Портрет(Напіврост)", price: "0", parentTitle: "На стелі" },
+      { name: "Портрет(Рост)", price: "0", parentTitle: "На стелі" },
+      { name: "Фотоскло", price: "0", parentTitle: "На стелі" },
+      { name: "Кераміка", price: "0", parentTitle: "На стелі" },
       { name: "Вірші", price: "0", parentTitle: "На стелі" },
       { name: "Малюнок", price: "0", parentTitle: "На стелі" },
       { name: "Реверс", price: "0", parentTitle: "На стелі" },
@@ -82,6 +86,7 @@ const options = [
     items: [
       { name: "Вірші", price: "0", parentTitle: "На плиті" },
       { name: "Малюнок", price: "0", parentTitle: "На плиті" },
+      { name: "Малюнок(Квіти)", price: "0", parentTitle: "На плиті" },
     ],
   },
 ];

@@ -4,6 +4,7 @@ import { ref, computed } from "vue";
 export const usePermissionStore = defineStore("permissions", () => {
   const permissions = ref([]);
   const isOwner = ref(false);
+  const isCollapsed = ref(true);
 
   function initializeStore() {
     const storedPermissions = localStorage.getItem("permissions");
@@ -39,5 +40,6 @@ export const usePermissionStore = defineStore("permissions", () => {
     clearPermissions,
     hasPermission,
     isOwner,
+    isCollapsed,
   };
 });

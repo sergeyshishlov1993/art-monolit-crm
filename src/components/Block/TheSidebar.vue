@@ -15,7 +15,6 @@ import { useRoute, useRouter } from "vue-router";
 
 import { logout } from "@/services/authService";
 
-const isCollapsed = ref(true);
 const activePage = ref("orders");
 const route = useRoute();
 const router = useRouter();
@@ -38,20 +37,7 @@ const canViewWarehouse = computed(() =>
 
 function selectedPage(name) {
   activePage.value = name;
-  isCollapsed.value = !isCollapsed.value;
-}
-
-let hoverTimeout = null;
-
-function handleMouseEnter() {
-  clearTimeout(hoverTimeout);
-  isCollapsed.value = false;
-}
-
-function handleMouseLeave() {
-  hoverTimeout = setTimeout(() => {
-    isCollapsed.value = true;
-  }, 100);
+  permissionStore.isCollapsed = !permissionStore.isCollapsed;
 }
 
 async function logoutUser() {
@@ -65,12 +51,12 @@ async function logoutUser() {
 
 <template>
   <aside
-    :class="['sidebar', { collapsed: isCollapsed }]"
-    @click="isCollapsed = !isCollapsed"
+    :class="['sidebar', { collapsed: permissionStore.isCollapsed }]"
+    @click="permissionStore.isCollapsed = !permissionStore.isCollapsed"
   >
     <div class="logo">
       <router-link to="/">
-        <IconLogo :class="{ logo_open: !isCollapsed }" />
+        <IconLogo :class="{ logo_open: !permissionStore.isCollapsed }" />
       </router-link>
     </div>
 
@@ -88,10 +74,10 @@ async function logoutUser() {
             },
           ]"
           @click="selectedPage('orders')"
-          @dblclick="isCollapsed = !isCollapsed"
+          @dblclick="permissionStore.isCollapsed = !permissionStore.isCollapsed"
         >
           <icon-order />
-          <ui-text-h3 v-if="!isCollapsed">Заказы</ui-text-h3>
+          <ui-text-h3 v-if="!permissionStore.isCollapsed">Заказы</ui-text-h3>
         </router-link>
 
         <router-link
@@ -104,10 +90,10 @@ async function logoutUser() {
             },
           ]"
           @click="selectedPage('calculate')"
-          @dblclick="isCollapsed = !isCollapsed"
+          @dblclick="permissionStore.isCollapsed = !permissionStore.isCollapsed"
         >
           <icon-calculate />
-          <ui-text-h3 v-if="!isCollapsed">Просчёт</ui-text-h3>
+          <ui-text-h3 v-if="!permissionStore.isCollapsed">Просчёт</ui-text-h3>
         </router-link>
 
         <router-link
@@ -115,10 +101,10 @@ async function logoutUser() {
           to="/warehouse"
           :class="[{ selected: route.name === 'warehouse' }]"
           @click="selectedPage('warehouse')"
-          @dblclick="isCollapsed = !isCollapsed"
+          @dblclick="permissionStore.isCollapsed = !permissionStore.isCollapsed"
         >
           <icon-warehouse />
-          <ui-text-h3 v-if="!isCollapsed">Склад</ui-text-h3>
+          <ui-text-h3 v-if="!permissionStore.isCollapsed">Склад</ui-text-h3>
         </router-link>
 
         <router-link
@@ -126,10 +112,10 @@ async function logoutUser() {
           to="/arrival"
           :class="[{ selected: route.name === 'arrival' }]"
           @click="selectedPage('arrival')"
-          @dblclick="isCollapsed = !isCollapsed"
+          @dblclick="permissionStore.isCollapsed = !permissionStore.isCollapsed"
         >
           <icon-arrival />
-          <ui-text-h3 v-if="!isCollapsed">Приход</ui-text-h3>
+          <ui-text-h3 v-if="!permissionStore.isCollapsed">Приход</ui-text-h3>
         </router-link>
 
         <router-link
@@ -137,10 +123,10 @@ async function logoutUser() {
           to="/defective"
           :class="[{ selected: route.name === 'defective' }]"
           @click="selectedPage('defective')"
-          @dblclick="isCollapsed = !isCollapsed"
+          @dblclick="permissionStore.isCollapsed = !permissionStore.isCollapsed"
         >
           <icon-defective />
-          <ui-text-h3 v-if="!isCollapsed">Брак</ui-text-h3>
+          <ui-text-h3 v-if="!permissionStore.isCollapsed">Брак</ui-text-h3>
         </router-link>
 
         <router-link
@@ -148,10 +134,10 @@ async function logoutUser() {
           to="/materials"
           :class="[{ selected: route.name === 'materials' }]"
           @click="selectedPage('materials')"
-          @dblclick="isCollapsed = !isCollapsed"
+          @dblclick="permissionStore.isCollapsed = !permissionStore.isCollapsed"
         >
           <icon-materials />
-          <ui-text-h3 v-if="!isCollapsed">Материалы</ui-text-h3>
+          <ui-text-h3 v-if="!permissionStore.isCollapsed">Материалы</ui-text-h3>
         </router-link>
       </ul>
     </nav>
@@ -163,7 +149,7 @@ async function logoutUser() {
         </div>
       </router-link>
 
-      <div @click="logoutUser" v-if="!isCollapsed">
+      <div @click="logoutUser" v-if="!permissionStore.isCollapsed">
         <IconLogoout />
         <q-tooltip> Выйти из системы </q-tooltip>
       </div>

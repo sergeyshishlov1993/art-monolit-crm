@@ -1,16 +1,16 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import TheSidebar from "@/components/Block/TheSidebar.vue";
+import { usePermissionStore } from "@/stores/PermissionStore";
 
+const permissionStore = usePermissionStore();
 const isTransitioning = ref(false);
 </script>
 
 <template>
   <div class="layout">
-    <the-header />
-
-    <div class="main-container">
-      <the-sidebar />
+    <div class="main-container" @click="permissionStore.isCollapsed = true">
+      <the-sidebar @click.stop />
 
       <main class="content" :class="{ fading: isTransitioning }">
         <transition name="fade" mode="out-in">

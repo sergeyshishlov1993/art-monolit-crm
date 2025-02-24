@@ -65,14 +65,22 @@ export function useOrdersFilters() {
   };
 
   const filterStatus = async (status) => {
-    await store.getOrders(status.value);
+    await store.getOrders(
+      status.value,
+      null,
+      null,
+      null,
+      null,
+      null,
+      storeAdress.value
+    );
   };
 
   const handlerCalculationOrder = async () => {
     await store.calculateOrders(
       selectedDateRange.value.from,
       selectedDateRange.value.to,
-      storeAdress.value,
+      storeAdress.value.name,
       selectedSource.value
     );
   };
@@ -86,12 +94,10 @@ export function useOrdersFilters() {
       null,
       null,
       null,
-      storeAdress.value
+      storeAdress.value.name
     );
 
-    await store.calculateOrders(null, null, storeAdress.value);
-
-    console.log("calculateOrders", storeAdress.value);
+    await store.calculateOrders(null, null, storeAdress.value.name);
   };
 
   const handlerSearch = async () => {
@@ -104,8 +110,6 @@ export function useOrdersFilters() {
       null,
       storeAdress.value
     );
-
-    console.log("search", storeAdress.value);
   };
 
   const resetFilters = async () => {
@@ -113,12 +117,22 @@ export function useOrdersFilters() {
     formattedDateRange.value = "";
     selectedStatus.value = "Новый";
     searchQuery.value = "";
-    storeAdress.value = "";
+    storeAdress.value =
+      storeAdress.value !== "Все магазины" ? storeAdress.value : "";
     selectedSource.value = "";
 
     store.totalOrders = 0;
     store.totalSum = 0;
-    await store.getOrders();
+
+    await store.getOrders(
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      storeAdress.value
+    );
   };
 
   const selectSource = async (select) => {

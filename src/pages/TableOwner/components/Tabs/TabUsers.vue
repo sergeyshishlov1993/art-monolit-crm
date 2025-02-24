@@ -79,6 +79,9 @@
               :readonly="
                 props.col.name === 'name' && props.row.name === 'Владелец'
               "
+              @update:model-value="
+                (value) => (props.row[props.col.name] = value.trim())
+              "
               @focus="touchInput(props.row)"
             ></q-input>
           </q-td>
@@ -93,10 +96,11 @@
                 icon="edit"
                 dense
                 @click="
+                  trimAllFields(props.row);
                   storeOwner.createUserAssignRole({
                     ...props.row,
                     selectedRoleId: selectedRoles[props.row.id],
-                  })
+                  });
                 "
                 v-if="props.row.isCreated"
               >
@@ -183,6 +187,14 @@ const handleRoleChange = (userId, row) => {
   const newRoleId = selectedRoles[userId];
 
   touchInput(row);
+};
+
+const trimAllFields = (row) => {
+  Object.keys(row).forEach((key) => {
+    if (typeof row[key] === "string") {
+      row[key] = row[key].trim();
+    }
+  });
 };
 
 onMounted(() => {

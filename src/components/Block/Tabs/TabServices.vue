@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watchEffect } from "vue";
 import TabTableSelector from "@/components/Block/Tabs/TabTableSelector/index.vue";
 import TheModalWindow from "@/components/Block/Tabs/TabTableSelector/components/TheModalWindow.vue";
+import { useTableState } from "./composables/useTableState";
 
 const emit = defineEmits([
   "addItem",
@@ -9,6 +10,7 @@ const emit = defineEmits([
   "updateInput",
   "createCell",
   "remove",
+  "updateRows",
 ]);
 const props = defineProps({
   rows: Array,
@@ -42,8 +44,10 @@ const columns = ref([
     field: "delete",
   },
 ]);
-const data = props.rows;
+const data = ref([...props.rows]);
 const idItems = ref(0);
+const history = ref([]);
+
 const options = [
   { name: "Доставка", price: "0" },
   { name: "Монтаж", price: "0" },
@@ -66,7 +70,7 @@ const formatTotalPrice = computed(() => {
 });
 
 const calcTotalPrice = () => {
-  totalPrice.value = data.reduce((sum, row) => {
+  totalPrice.value = data.value.reduce((sum, row) => {
     const price = parseFloat(row.price) || 0;
     return sum + price;
   }, 0);
@@ -81,11 +85,16 @@ const openWindol = (val, id) => {
 
 function addItem() {
   emit("addItem", "rowsServices");
+
+  data.value = props.rows;
+  saveState();
 }
 function addSelectedValue(val) {
   emit("selectValue", val, "rowsServices");
 
   calcTotalPrice();
+  data.value = props.rows;
+  saveState();
 }
 function allowOnlyNumbers(event) {
   const charCode = event.which ? event.which : event.keyCode;
@@ -100,28 +109,35 @@ function allowOnlyNumbers(event) {
   }
 }
 function createCell(val, state, id) {
-  const idx = data.findIndex((el) => el.id === id);
-  data[idx] = val;
+  const idx = data.value.findIndex((el) => el.id === id);
+  data.value[idx] = { ...val, id: id };
 
   showModal.value = state;
 
-  emit("createCell", "rowsServices", data, id);
+  data.value = props.rows;
+
+  emit("createCell", "rowsServices", data.value, id);
   calcTotalPrice();
+  saveState();
 }
 function emitValue(row, fieldName, id) {
   emit("updateInput", "rowsServices", id, row, fieldName);
 
   calcTotalPrice();
+  data.value = props.rows;
+  saveState();
 }
 function removeItem(id) {
-  const idx = data.findIndex((el) => el.id === id);
+  saveState();
+  const idx = data.value.findIndex((el) => el.id === id);
 
   if (idx !== -1) {
-    data.splice(idx, 1);
+    data.value.splice(idx, 1);
   }
   emit("remove", "rowsServices", id);
 
   calcTotalPrice();
+  data.value = props.rows;
 }
 
 watchEffect(() => {
@@ -131,8 +147,17 @@ watchEffect(() => {
     document.body.style.overflow = "";
   }
 });
+
+const { saveState, handleKeyDown } = useTableState(
+  history,
+  data,
+  "rowsServices",
+  calcTotalPrice,
+  emit
+);
 onMounted(() => {
   calcTotalPrice();
+  window.addEventListener("keydown", handleKeyDown);
 });
 </script>
 

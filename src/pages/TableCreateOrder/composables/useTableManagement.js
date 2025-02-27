@@ -23,7 +23,7 @@ export function useTableManagement(dataTable, calcTotalPrice) {
     calcTotalPrice();
   }
 
-  function createCell(table, val, id) {
+  function createCell(table, val) {
     dataTable[table] = val;
     calcTotalPrice();
   }
@@ -51,11 +51,16 @@ export function useTableManagement(dataTable, calcTotalPrice) {
     calcTotalPrice();
   }
 
+  function saveState(tableName, data) {
+    dataTable[tableName] = data;
+  }
+
   return {
     addItem,
     removeItem,
     updateInput,
     createCell,
     addSelectedValue,
+    saveState,
   };
 }

@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed, onMounted, reactive, watchEffect } from "vue";
+import { ref, computed, onMounted, reactive, watchEffect, toRefs } from "vue";
 import TabTableSelector from "@/components/Block/Tabs/TabTableSelector/index.vue";
 import TheModalWindow from "@/components/Block/Tabs/TabTableSelector/components/TheModalWindow.vue";
+import { useTableState } from "./composables/useTableState";
 
 const emit = defineEmits([
   "addItem",
@@ -9,6 +10,7 @@ const emit = defineEmits([
   "updateInput",
   "createCell",
   "remove",
+  "updateRows",
 ]);
 const props = defineProps({
   rows: Array,
@@ -20,11 +22,14 @@ const pagination = ref({
   rowsPerPage: 20,
 });
 
+const parentsData = ref([...props.rows]);
+
 const data = ref([
   { id: crypto.randomUUID(), header: "На стелі" },
   { id: crypto.randomUUID(), header: "На плиті" },
-  ...props.rows,
+  ...parentsData.value,
 ]);
+
 const tableKey = ref(0);
 const showModal = ref(false);
 const idItems = ref(0);
@@ -90,6 +95,7 @@ const options = [
     ],
   },
 ];
+const history = ref([]);
 
 const totalPrice = ref(0);
 const formatTotalPrice = computed(() => {
@@ -107,6 +113,8 @@ function addItem() {
   data.value.push(newItem);
 
   emit("addItem", "rowsWorks", newItem);
+
+  saveState();
 
   tableKey.value = JSON.stringify(sortedRows.value);
 }
@@ -138,7 +146,7 @@ function allowOnlyNumbers(event) {
 }
 function emitValue(row, fieldName, id) {
   emit("updateInput", "rowsWorks", id, row, fieldName);
-
+  saveState();
   calcTotalPrice();
 }
 
@@ -149,21 +157,21 @@ function removeItem(id) {
     data.value.splice(idx, 1);
   }
   emit("remove", "rowsWorks", id);
-
+  saveState();
   tableKey.value = JSON.stringify(sortedRows.value);
   calcTotalPrice();
 }
 
 function createCell(val, state, id) {
   const idx = data.value.findIndex((el) => el.id === id);
-  data.value[idx] = val;
+  data.value[idx] = { ...val, id: id };
 
   showModal.value = state;
 
   const validData = data.value.filter((el) => !el.header);
 
   emit("createCell", "rowsWorks", validData, id);
-
+  saveState();
   calcTotalPrice();
   tableKey.value = JSON.stringify(sortedRows.value);
 }
@@ -192,8 +200,17 @@ watchEffect(() => {
   }
 });
 
+const { saveState, handleKeyDown } = useTableState(
+  history,
+  data,
+  "rowsWorks",
+  calcTotalPrice,
+  emit
+);
+
 onMounted(() => {
   calcTotalPrice();
+  window.addEventListener("keydown", handleKeyDown);
 });
 </script>
 

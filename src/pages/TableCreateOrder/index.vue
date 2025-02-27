@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useOrders } from "@/stores/Orders";
@@ -114,8 +114,14 @@ const {
   prepayment,
 } = useCalcTotalPrice(dataTable);
 
-const { addItem, removeItem, updateInput, createCell, addSelectedValue } =
-  useTableManagement(dataTable, calcTotalPrice);
+const {
+  addItem,
+  removeItem,
+  updateInput,
+  createCell,
+  addSelectedValue,
+  saveState,
+} = useTableManagement(dataTable, calcTotalPrice);
 
 const {
   addMovedOrder,
@@ -182,7 +188,17 @@ const activeTabProps = computed(() => {
   }
 });
 
+const handleSaveShortcut = (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+    event.preventDefault();
+    if (!isProcessing.value) {
+      saveOrder();
+    }
+  }
+};
+
 onMounted(async () => {
+  window.addEventListener("keydown", handleSaveShortcut);
   userStore.loadUserFromStorage();
 
   if (isOrderCreated.value) {
@@ -253,6 +269,10 @@ async function distributeData() {
   dataTable.rowsWorks = order.value.OrderWorks;
   sortPhotos(order.value.OrderPhotoLinks);
 }
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleSaveShortcut);
+});
 </script>
 
 <template>
@@ -307,6 +327,7 @@ async function distributeData() {
         @createCell="createCell"
         @remove="removeItem"
         @updateParents="addPhoto"
+        @updateRows="saveState"
       />
     </keep-alive>
 

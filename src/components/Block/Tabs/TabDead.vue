@@ -1,14 +1,15 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useTableState } from "./composables/useTableState";
 
 const props = defineProps({
   rows: Array,
 });
 
-const data = computed(() => props.rows);
+const history = ref([]);
 
-const emit = defineEmits(["addItem", "updateInput", "remove"]);
-
+const data = ref([...props.rows]);
+const emit = defineEmits(["addItem", "updateInput", "remove", "updateRows"]);
 const columns = ref([
   {
     name: "accountNumber",
@@ -71,16 +72,35 @@ const pagination = ref({
   rowsPerPage: 20,
 });
 function addItem() {
+  saveState();
   emit("addItem", "rowsDead");
 }
 
 function emitValue(row, fieldName, id) {
+  saveState();
   emit("updateInput", "rowsDead", id, row, fieldName);
 }
 
 function removeItem(id) {
+  saveState();
   emit("remove", "rowsDead", id);
 }
+
+function stub() {
+  return;
+}
+
+const { saveState, handleKeyDown } = useTableState(
+  history,
+  data,
+  "rowsDead",
+  stub,
+  emit
+);
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown);
+});
 </script>
 
 <template>

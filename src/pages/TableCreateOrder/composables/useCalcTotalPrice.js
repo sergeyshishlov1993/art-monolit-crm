@@ -31,7 +31,7 @@ export function useCalcTotalPrice(dataTable) {
     }, 0);
 
     totalPrice.value = materials + services + works;
-    finalPrice.value = totalPrice.value;
+    finalPrice.value = totalPrice.value - sale.value - prepayment.value;
   }
 
   const calcFinalPrice = (event, name) => {

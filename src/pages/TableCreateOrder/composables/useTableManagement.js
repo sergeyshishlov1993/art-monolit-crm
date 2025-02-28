@@ -1,6 +1,6 @@
 import { reactive } from "vue";
 
-export function useTableManagement(dataTable, calcTotalPrice) {
+export function useTableManagement(dataTable, calcTotalPrice, calcFinalPrice) {
   function addItem(tableName, item) {
     if (tableName === "rowsWorks") {
       dataTable.rowsWorks.push(item);
@@ -21,11 +21,13 @@ export function useTableManagement(dataTable, calcTotalPrice) {
     const idx = dataTable[table].findIndex((el) => el.id === val.id);
     dataTable[table][idx] = val;
     calcTotalPrice();
+    calcFinalPrice();
   }
 
   function createCell(table, val) {
     dataTable[table] = val;
     calcTotalPrice();
+    calcFinalPrice();
   }
 
   function removeItem(table, id) {
@@ -37,6 +39,7 @@ export function useTableManagement(dataTable, calcTotalPrice) {
       });
     }
     calcTotalPrice();
+    calcFinalPrice();
   }
 
   function updateInput(table, id, row, fieldName) {
@@ -49,6 +52,7 @@ export function useTableManagement(dataTable, calcTotalPrice) {
       dataTable[table][idx][fieldName] = row[fieldName];
     }
     calcTotalPrice();
+    calcFinalPrice();
   }
 
   function saveState(tableName, data) {

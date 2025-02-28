@@ -121,7 +121,7 @@ const {
   createCell,
   addSelectedValue,
   saveState,
-} = useTableManagement(dataTable, calcTotalPrice);
+} = useTableManagement(dataTable, calcTotalPrice, calcFinalPrice);
 
 const {
   addMovedOrder,

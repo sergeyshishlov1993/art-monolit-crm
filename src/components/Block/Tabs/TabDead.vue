@@ -17,19 +17,19 @@ const columns = ref([
     field: "accountNumber",
     sortable: true,
   },
-  {
-    name: "deadName",
-    align: "left",
-    label: "Имя",
-    field: "deadName",
-    sortable: true,
-  },
 
   {
     name: "deadSecondName",
     align: "left",
     label: "Фамилия",
     field: "deadSecondName",
+    sortable: true,
+  },
+  {
+    name: "deadName",
+    align: "left",
+    label: "Имя",
+    field: "deadName",
     sortable: true,
   },
   {

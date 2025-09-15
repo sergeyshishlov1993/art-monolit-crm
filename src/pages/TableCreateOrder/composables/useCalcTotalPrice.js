@@ -20,14 +20,12 @@ export function useCalcTotalPrice(dataTable) {
 
     const services = dataTable.rowsServices.reduce((acc, row) => {
       const price = parseFloat(row.price) || 0;
-      const qty = parseFloat(row.quantity) || 1;
-      return acc + price * qty;
+      return acc + price;
     }, 0);
 
     const works = dataTable.rowsWorks.reduce((acc, row) => {
       const price = parseFloat(row.price) || 0;
-      const qty = parseFloat(row.quantity) || 1;
-      return acc + price * qty;
+      return acc + price;
     }, 0);
 
     totalPrice.value = materials + services + works;
@@ -35,15 +33,17 @@ export function useCalcTotalPrice(dataTable) {
   }
 
   const calcFinalPrice = (event, name) => {
-    const value = Number(event.target.value.replace(/\D/g, "")) || 0;
+    if (event && event.target) {
+      const value = Number(event.target.value.replace(/\D/g, "")) || 0;
 
-    switch (name) {
-      case "sale":
-        sale.value = value;
-        break;
-      case "prepayment":
-        prepayment.value = value;
-        break;
+      switch (name) {
+        case "sale":
+          sale.value = value;
+          break;
+        case "prepayment":
+          prepayment.value = value;
+          break;
+      }
     }
 
     const priceAfterDiscount = totalPrice.value - sale.value;

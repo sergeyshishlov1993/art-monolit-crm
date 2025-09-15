@@ -71,11 +71,11 @@ export function usePDFGenerator(
           ],
         },
         {
-          text: `Імʼя: ${dataTable.customer.first_name || "Не указано"}`,
+          text: `Прізвище: ${dataTable.customer.second_name || "Не указано"}`,
           margin: [0, 0, 0, 5],
         },
         {
-          text: `Прізвище: ${dataTable.customer.second_name || "Не указано"}`,
+          text: `Імʼя: ${dataTable.customer.first_name || "Не указано"}`,
           margin: [0, 0, 0, 5],
         },
         {

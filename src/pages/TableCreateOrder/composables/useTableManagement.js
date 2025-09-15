@@ -17,11 +17,28 @@ export function useTableManagement(dataTable, calcTotalPrice, calcFinalPrice) {
     }
   }
 
+
   function addSelectedValue(val, table) {
-    const idx = dataTable[table].findIndex((el) => el.id === val.id);
-    dataTable[table][idx] = val;
+    const existingRow = dataTable[table].find(
+        (row) => row.name === val.name && row.id !== val.id
+    );
+
+    if (existingRow) {
+      existingRow.quantity =
+          (Number(existingRow.quantity) || 0) + (Number(val.quantity) || 1);
+
+      const placeholderIndex = dataTable[table].findIndex((el) => el.id === val.id);
+      if (placeholderIndex !== -1) {
+        dataTable[table].splice(placeholderIndex, 1);
+      }
+    } else {
+      const idx = dataTable[table].findIndex((el) => el.id === val.id);
+      if (idx !== -1) {
+        dataTable[table][idx] = val;
+      }
+    }
+
     calcTotalPrice();
-    calcFinalPrice();
   }
 
   function createCell(table, val) {
@@ -42,17 +59,23 @@ export function useTableManagement(dataTable, calcTotalPrice, calcFinalPrice) {
     calcFinalPrice();
   }
 
+
   function updateInput(table, id, row, fieldName) {
-    const idx = dataTable[table].findIndex((el) => el.id === id);
-    if (idx === -1) return;
-    const key = Object.keys(row).find((k) => row[k] === fieldName);
-    if (table === "rowsWorks") {
-      dataTable[table][idx][key] = row[key];
-    } else {
-      dataTable[table][idx][fieldName] = row[fieldName];
+    const tableData = dataTable[table];
+    if (!tableData) return;
+
+    const rowIndex = tableData.findIndex((el) => el.id === id);
+    if (rowIndex === -1) return;
+
+    tableData[rowIndex][fieldName] = row[fieldName];
+
+    if (
+        table === "rowsMaterials" ||
+        table === "rowsServices" ||
+        table === "rowsWorks"
+    ) {
+      calcTotalPrice();
     }
-    calcTotalPrice();
-    calcFinalPrice();
   }
 
   function saveState(tableName, data) {

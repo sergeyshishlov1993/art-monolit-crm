@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { ApiUrl } from "@/services/api";
@@ -86,6 +86,9 @@ export const useArrival = defineStore("arrival", () => {
   ]);
 
   const rows = ref([]);
+  const hasUnsavedChanges = computed(() => {
+    return rows.value.some(row => row.isCreated || row.isChanged);
+  });
 
   function addRow() {
     rows.value.push({
@@ -165,6 +168,7 @@ export const useArrival = defineStore("arrival", () => {
       const response = await axios.post(`${ApiUrl}/arrival/create`, {
         arrivalData: item,
       });
+
 
       $q.notify({
         message: "Успешно cоздано!",
@@ -249,6 +253,7 @@ export const useArrival = defineStore("arrival", () => {
         `${ApiUrl}/arrival/transfer-to-warehouse`
       );
 
+
       $q.notify({
         message: "Успешно внесено в склад",
         color: "positive",
@@ -256,6 +261,7 @@ export const useArrival = defineStore("arrival", () => {
         position: "top-right",
         timeout: 2500,
       });
+
     } catch (error) {
       console.error("ERROR", error);
     }
@@ -264,6 +270,7 @@ export const useArrival = defineStore("arrival", () => {
   return {
     columns,
     rows,
+    hasUnsavedChanges,
     addRow,
     formatDate,
     getCurrentDate,

@@ -45,6 +45,7 @@ const { searchQuery, fetchSearchResults } = useArrivalFilters();
         :columns="storeArrival.columns"
         v-model:pagination="pagination"
         row-key="id"
+        :key="storeArrival.rows.length"
       >
         <template v-slot:body-cell-accountNumber="props">
           <q-td :props="props">
@@ -118,8 +119,9 @@ const { searchQuery, fetchSearchResults } = useArrivalFilters();
     </div>
 
     <div class="button-group">
+
       <q-btn
-        :disable="!storeArrival.rows.length"
+          :disable="storeArrival.hasUnsavedChanges || !storeArrival.rows.length"
         label="Внести в склад"
         icon="add_circle"
         color="green"

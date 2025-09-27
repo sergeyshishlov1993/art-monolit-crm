@@ -153,7 +153,7 @@
               <template v-else-if="col.name === 'action'">
                 <div @click.stop>
                   <q-btn
-                    v-if="permissionStore.isOwner == 'true'"
+                    v-if="permissionStore.isOwner == 'true' || props.row.isDraft"
                     color="red"
                     icon="delete"
                     round
@@ -249,18 +249,16 @@ const { getStatusClass, lastActiveStatus, updateStatuses } = useOrdersStatus(
 
 useOrdersStoreInit();
 
-const filteredColumns = computed(() =>
-  permissionStore.isOwner == "true"
-    ? store.columns
-    : store.columns.filter((col) => col.name !== "action")
-);
+const filteredColumns = computed(() => {
+  if (canWrite) {
+    return store.columns;
+  }
+  return store.columns.filter((col) => col.name !== "action");
+});
 const formattedTotalSum = computed(() => {
   return new Intl.NumberFormat("ru-RU").format(store.totalSum) + " грн";
 });
 
-watchEffect(() => {
-  store.rows = store.rows.filter((el) => el.isPublic === true);
-});
 </script>
 
 <style lang="scss" scoped>

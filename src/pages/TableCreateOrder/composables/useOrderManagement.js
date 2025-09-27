@@ -16,7 +16,6 @@ export function useOrderManagement(
   sale,
   route,
   router,
-  isValid
 ) {
   const { validateCustomerData, validationTable } = useValidation($q);
   const isOrderCreated = ref(route.query.isCreated === "false");

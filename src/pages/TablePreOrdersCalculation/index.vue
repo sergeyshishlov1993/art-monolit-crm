@@ -252,10 +252,9 @@ const {
   filterStatus,
   handlerSearch,
   resetFilters,
-  formatDate,
 } = usePreOrderFilters();
 
-const { addItem, openOrder, moveItem, removeItem, isProcessing } =
+const { addItem, openOrder, moveItem, removeItem } =
   usePreOrderActions();
 
 const { onRequest } = usePreOrderPagination();

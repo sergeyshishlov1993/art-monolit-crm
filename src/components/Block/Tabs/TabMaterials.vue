@@ -120,7 +120,14 @@ function changeQuantity(val) {
 function createCell(val, state, id) {
   saveState();
   const idx = data.value.findIndex((el) => el.id === id);
-  data.value[idx] = { ...val, id: id };
+  const customMaterial = {
+    ...val,
+    id: id,
+    isCustom: val.isCreatedMenedger || false,
+    warehouseId: val.isCreatedMenedger ? null : val.warehouseId
+  };
+
+  data.value[idx] = customMaterial;
   showModal.value = state;
 
   emit("createCell", "rowsMaterials", data.value, id);

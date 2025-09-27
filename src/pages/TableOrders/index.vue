@@ -222,7 +222,6 @@ import { useOrdersStoreInit } from "./composables/useOrdersStoreInit";
 import { useOrdersStatus } from "./composables/useOrdersStatus";
 import { useOwner } from "@/stores/Owner";
 import UiTextH1 from "@/components/Ui/UiTextH1.vue";
-import UiTextH3 from "@/components/Ui/UiTextH3.vue";
 
 import FilterDialog from "./components/FilterDialog.vue";
 
@@ -235,21 +234,10 @@ const permissionStore = usePermissionStore();
 const canWrite = permissionStore.hasPermission("can_write_orders");
 
 const {
-  formattedDateRange,
-  selectedDateRange,
   selectedStores,
-  selectedStatus,
   statusOptions,
   searchQuery,
-  updateFormattedDateRange,
-  handleStoreChange,
-  filterStatus,
   handlerSearch,
-  resetFilters,
-  showCalendar,
-  selectedSource,
-  selectSource,
-  handlerCalculationOrder,
 } = useOrdersFilters();
 
 const { addItem, openOrder, removeOrder } = useOrdersActions(canWrite);
